@@ -6,7 +6,7 @@
 export class DefinitelyWizardsItemSheet extends ItemSheet {
     /** @override */
     static get defaultOptions() {
-        return mergeObject(super.defaultOptions, {
+        return foundry.utils.mergeObject(super.defaultOptions, {
             classes: ["definitelywizards", "sheet", "item"],
             template: "systems/definitely-wizards/templates/item-sheet.html",
             width: 550,

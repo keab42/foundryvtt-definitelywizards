@@ -3,7 +3,7 @@ const consequencesRoll = "1d6";
 export async function rollConsequences(actorID, isWizardRoll) {
     const template = "systems/definitely-wizards/templates/chat/consequences-roll-chat.hbs";
     const actor = game.actors.get(actorID);
-    const roll = new Roll(consequencesRoll, actor.getRollData()).evaluate({ async: false });  // avoid deprecation warning, backwards compatible
+    const roll = await new Roll(consequencesRoll, actor.getRollData()).evaluate();  // avoid deprecation warning, backwards compatible
 
     let resultMessage = "";
 
@@ -40,13 +40,14 @@ export async function rollConsequences(actorID, isWizardRoll) {
         owner: actor.id
     };
 
-    ChatMessage.create({
+    let rollMessage = {
         user: game.user.id,
         speaker: ChatMessage.getSpeaker({actor: actor}),
         content: await renderTemplate(template, templateData),
-        roll: roll,
-        sound: CONFIG.sounds.dice,
-        type: CONST.CHAT_MESSAGE_TYPES.ROLL
-    });
+        rolls: roll,
+        sound: CONFIG.sounds.dice
+    };
+
+    await ChatMessage.create(rollMessage);
 
 }

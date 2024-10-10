@@ -106,7 +106,7 @@ export class DefinitelyWizardsActor extends Actor {
             user: game.user.id,
             speaker: ChatMessage.getSpeaker({actor: this}),
             content: await renderTemplate(template, templateData),
-            type: CONST.CHAT_MESSAGE_TYPES.OOC
+            style: CONST.CHAT_MESSAGE_STYLES.OOC
         });
     }
 }

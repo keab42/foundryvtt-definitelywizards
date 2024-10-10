@@ -22,3 +22,6 @@ v.1.3.0 25/09/2023
 - Fixed some icons being the wrong colour
 - Fixed random class roller not rolling above a 6
 - Squashed some additional small bugs
+
+V.1.4.0 10/10/2023
+- Updated for Foundry V12

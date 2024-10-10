@@ -60,11 +60,7 @@
                         <div class="attribute" id="player-class">
                             <label>{{localize 'DW.ClassDescriptor'}}</label>
                             <select class="attribute-select" name="system.player-class" data-type="String">
-                                {{#select system.player-class}}
-                                    {{#each system.playerClasses as |player-class key|}}
-                                        <option value="{{key}}">{{player-class.label}}</option>
-                                    {{/each}}
-                                {{/select}}
+                                {{selectOptions system.playerClasses selected=system.player-class localize=true}}
                             </select>
                             <img class="attribute-roll expand no-border" data-roll="1d11"
                                 src="/systems/definitely-wizards/resources/icons/die-six.svg" height="25" width="25" />
@@ -73,11 +69,7 @@
                         <div class="attribute">
                             <label>{{localize 'DW.Prop1'}}</label>
                             <select class="prop-select" name="system.prop-1" data-type="String">
-                                {{#select system.prop-1}}
-                                    {{#each system.props-1 as |prop-1 key|}}
-                                        <option value="{{key}}">{{prop-1.label}}</option>
-                                    {{/each}}
-                                {{/select}}
+                                {{selectOptions system.props-1 selected=system.prop-1 localize=true}}
                             </select>
                             <img class="attribute-roll expand no-border" data-roll="1d6+1"
                                 src="/systems/definitely-wizards/resources/icons/die-six.svg" height="25" width="25" />
@@ -86,11 +78,7 @@
                         <div class="attribute">
                             <label>{{localize 'DW.Prop2'}}</label>
                             <select class="prop-select" name="system.prop-2" data-type="String">
-                                {{#select system.prop-2}}
-                                    {{#each system.props-2 as |prop-2 key|}}
-                                        <option value="{{key}}">{{prop-2.label}}</option>
-                                    {{/each}}
-                                {{/select}}
+                                {{selectOptions system.props-2 selected=system.prop-2 localize=true}}
                             </select>
                             <img class="attribute-roll expand no-border" data-roll="1d6+1"
                                 src="/systems/definitely-wizards/resources/icons/die-six.svg" height="25" width="25" />

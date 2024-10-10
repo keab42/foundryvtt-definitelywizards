@@ -2,11 +2,11 @@
   "id": "definitely-wizards",
   "title": "Definitely Wizards",
   "description": "A TTRPG about not being a wizard",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "compatibility": {
     "minimum": "11",
-    "verified": "11",
-    "maximum": "11"
+    "verified": "12",
+    "maximum": "12"
   },
   "authors": [
     {

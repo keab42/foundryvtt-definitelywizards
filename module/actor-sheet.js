@@ -10,7 +10,7 @@
 export class DefinitelyWizardsActorSheet extends ActorSheet {
     /** @override */
     static get defaultOptions() {
-        return mergeObject(super.defaultOptions, {
+        return foundry.utils.mergeObject(super.defaultOptions, {
             classes: ["definitelywizards", "sheet", "actor"],
             template: "systems/definitely-wizards/templates/actor-sheet.html",
             width: 750,
@@ -66,7 +66,7 @@ export class DefinitelyWizardsActorSheet extends ActorSheet {
             const roller = $(ev.currentTarget);
             const input = roller.siblings(".stat-value").get(0);
             const currentValue = parseInt(input.value);
-            const roll = new Roll(roller.data("roll"), this.actor.getRollData()).evaluate({ async: false });  // avoid deprecation warning, backwards compatible
+            const roll = await new Roll(roller.data("roll"), this.actor.getRollData()).evaluate();
             const isSuccess = roll.total <= currentValue;
             const rollSuccess = isSuccess ? game.i18n.localize("DW.Success") : game.i18n.localize("DW.Failed");
 
@@ -82,14 +82,15 @@ export class DefinitelyWizardsActorSheet extends ActorSheet {
                 this.actor.updateStat(isWizardRoll, 1);
             }
 
-            ChatMessage.create({
+            const rollMessage = {
                 user: game.user.id,
                 speaker: ChatMessage.getSpeaker({actor: this.actor}),
                 content: await renderTemplate(template, templateData),
-                roll: roll,
-                sound: CONFIG.sounds.dice,
-                type: CONST.CHAT_MESSAGE_TYPES.ROLL
-             });
+                rolls: roll,
+                sound: CONFIG.sounds.dice
+            };
+
+            await ChatMessage.create(rollMessage);
 
         });
 
@@ -203,13 +204,13 @@ export class DefinitelyWizardsActorSheet extends ActorSheet {
 
     async _onAttributeRoll(event) {
         const roller = $(event.currentTarget);
-        const roll = new Roll(roller.data("roll"), this.actor.getRollData()).evaluate({ async: false });  // avoid deprecation warning, backwards compatible
+        const roll = await new Roll(roller.data("roll"), this.actor.getRollData()).evaluate();
         const parent = roller.parent("div");
         const label = parent.find("label").get(0).innerText;
         const select = parent.find("select").get(0);
         const attributeName = select.name;
         const option = select.options[roll.total];
-        
+
         await this.actor.update({ [attributeName]: option.value });
 
         if(attributeName === "system.player-class") {
@@ -220,14 +221,15 @@ export class DefinitelyWizardsActorSheet extends ActorSheet {
             await this.updateClass(option.value);
         }
 
-        roll.toMessage({
+        const rollMessage = {
             user: game.user.id,  // avoid deprecation warning, backwards compatible
             speaker: ChatMessage.getSpeaker({ actor: this.actor }),
             content: `<h2>${label} Roll</h2><h3>${option.innerText}</h3>`,
-            roll: roll,
-            sound: CONFIG.sounds.dice,
-            type: CONST.CHAT_MESSAGE_TYPES.ROLL
-        });
+            rolls: roll,
+            sound: CONFIG.sounds.dice
+        };
+
+        await ChatMessage.create(rollMessage);
     }
 
    async  _onAttributeChanged(event) {
@@ -244,7 +246,7 @@ export class DefinitelyWizardsActorSheet extends ActorSheet {
 
     async updateClass(className) {
         let classDesc = this.actor.system.playerClasses[className].description;
-
+        this.actor.update({ "system.player-class": className});
         this.actor.update({ "system.class-description": game.i18n.localize(classDesc)});
     }
 

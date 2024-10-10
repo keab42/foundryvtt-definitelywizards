@@ -7,7 +7,7 @@ Hooks.once("init", async function () {
     console.log(`DefinitelyWizards: Initializing`);
 
     // Define custom Entity classes
-    if (isNewerVersion(game.data.version, "0.8.0")) {
+    if (foundry.utils.isNewerVersion(game.data.version, "0.8.0")) {
         CONFIG.Actor.documentClass = DefinitelyWizardsActor;
     } else {
         CONFIG.Actor.entityClass = DefinitelyWizardsActor;
@@ -41,7 +41,7 @@ Hooks.once("ready", async function () {
         FinalTest: "/systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-final-test.json"
     };
 
-    if (isNewerVersion(game.data.version, "0.8.0")) {
+    if (foundry.utils.isNewerVersion(game.data.version, "0.8.0")) {
         for (const document of game.collections.get("RollTable").contents) {
             existingRollTables.push(document.name);
         }
