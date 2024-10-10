@@ -3,7 +3,8 @@ const consequencesRoll = "1d6";
 export async function rollConsequences(actorID, isWizardRoll) {
     const template = "systems/definitely-wizards/templates/chat/consequences-roll-chat.hbs";
     const actor = game.actors.get(actorID);
-    const roll = await new Roll(consequencesRoll, actor.getRollData()).evaluate();  // avoid deprecation warning, backwards compatible
+    const roll = new Roll(consequencesRoll, actor.getRollData());consequencesRoll
+    await roll.evaluate();
 
     let resultMessage = "";
 

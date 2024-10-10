@@ -66,7 +66,10 @@ export class DefinitelyWizardsActorSheet extends ActorSheet {
             const roller = $(ev.currentTarget);
             const input = roller.siblings(".stat-value").get(0);
             const currentValue = parseInt(input.value);
-            const roll = await new Roll(roller.data("roll"), this.actor.getRollData()).evaluate();
+            
+            const roll = new Roll(roller.data("roll"), this.actor.getRollData());
+            await roll.evaluate();
+            
             const isSuccess = roll.total <= currentValue;
             const rollSuccess = isSuccess ? game.i18n.localize("DW.Success") : game.i18n.localize("DW.Failed");
 
@@ -204,7 +207,10 @@ export class DefinitelyWizardsActorSheet extends ActorSheet {
 
     async _onAttributeRoll(event) {
         const roller = $(event.currentTarget);
-        const roll = await new Roll(roller.data("roll"), this.actor.getRollData()).evaluate();
+
+        const roll = new Roll(roller.data("roll"), this.actor.getRollData());
+        await roll.evaluate();
+
         const parent = roller.parent("div");
         const label = parent.find("label").get(0).innerText;
         const select = parent.find("select").get(0);
