@@ -1,0 +1,29 @@
+:root {
+  --definitely-wizards-c-dark: #191813;
+  --definitely-wizards-c-faint: #c9c7b8;
+  --definitely-wizards-c-beige: #b5b3a4;
+  --definitely-wizards-c-tan: #444444;
+  --definitely-wizards-c-white: #ffffff;
+  --definitely-wizards-c-black: #000000;
+  --definitely-wizards-c-groove: #eeede0;
+}
+
+.theme-dark {
+  --definitely-wizards-c-dark: #c9c7b8;
+  --definitely-wizards-c-faint: #191813;
+  --definitely-wizards-c-beige: #444444;
+  --definitely-wizards-c-tan: #b5b3a4;
+  --definitely-wizards-c-white: #000000;
+  --definitely-wizards-c-black: #ffffff;
+  --definitely-wizards-c-groove: #11121f;
+}
+
+$c-white: var(--definitely-wizards-c-white);
+$c-black: var(--definitely-wizards-c-black);
+
+$c-dark: var(--definitely-wizards-c-dark);
+$c-faint: var(--definitely-wizards-c-faint);
+$c-beige: var(--definitely-wizards-c-beige);
+$c-tan: var(--definitely-wizards-c-tan);
+
+$c-groove: var(--definitely-wizards-c-groove);
