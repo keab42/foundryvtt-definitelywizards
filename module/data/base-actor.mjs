@@ -1,5 +1,4 @@
-export default class DefWizActorBase extends foundry.abstract
-  .TypeDataModel {
+export default class DefWizActorBase extends foundry.abstract.TypeDataModel {
   static LOCALIZATION_PREFIXES = ["DEF_WIZ.Actor.base"];
 
   static defineSchema() {
@@ -7,13 +6,25 @@ export default class DefWizActorBase extends foundry.abstract
     const requiredInteger = { required: true, nullable: false, integer: true };
     const schema = {};
 
-    schema.wizard = new fields.SchemaField({
-      value: new fields.NumberField({...requiredInteger, initial: 3, min: 0})
-    })
+    schema.stats = new fields.SchemaField({
+      wizard: new fields.SchemaField({
+        value: new fields.NumberField({
+          ...requiredInteger,
+          initial: 3,
+          min: 0,
+          max: 7,
+        }),
+      }),
 
-    schema.wild = new fields.SchemaField({
-      value: new fields.NumberField({...requiredInteger, initial: 3, min: 0})
-    })
+      wild: new fields.SchemaField({
+        value: new fields.NumberField({
+          ...requiredInteger,
+          initial: 3,
+          min: 0,
+          max: 7,
+        }),
+      }),
+    });
 
     schema.biography = new fields.HTMLField();
 

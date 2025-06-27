@@ -1,9 +1,9 @@
-import DefWizActorBase from './base-actor.mjs';
+import DefWizActorBase from "./base-actor.mjs";
 
 export default class DefWizCharacter extends DefWizActorBase {
   static LOCALIZATION_PREFIXES = [
     ...super.LOCALIZATION_PREFIXES,
-    'DEF_WIZ.Actor.Character',
+    "DEF_WIZ.Actor.Character",
   ];
 
   static defineSchema() {

@@ -1,5 +1,3 @@
-import { prepareActiveEffectCategories } from '../helpers/effects.mjs';
-
 const { api, sheets } = foundry.applications;
 const TextEditor = foundry.applications.ux.TextEditor;
 
@@ -12,7 +10,7 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
 ) {
   /** @override */
   static DEFAULT_OPTIONS = {
-    classes: ['definitely-wizards', 'actor'],
+    classes: ["definitely-wizards", "actor"],
     position: {
       width: 600,
       height: 600,
@@ -24,40 +22,42 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
       deleteDoc: this._deleteDoc,
       toggleEffect: this._toggleEffect,
       roll: this._onRoll,
+      statPlus: this._increaseStat,
+      statMinus: this._decreaseStat,
     },
     // Custom property that's merged into `this.options`
-    // dragDrop: [{ dragSelector: '.draggable', dropSelector: null }],
+    dragDrop: [{ dragSelector: ".draggable", dropSelector: null }],
     form: {
       submitOnChange: true,
     },
     window: {
       resizable: true,
-    }
+    },
   };
 
   /** @override */
   static PARTS = {
     header: {
-      template: 'systems/def-wiz-2/templates/actor/header.hbs',
+      template: "systems/def-wiz-2/templates/actor/header.hbs",
     },
     tabs: {
       // Foundry-provided generic template
-      template: 'templates/generic/tab-navigation.hbs',
+      template: "templates/generic/tab-navigation.hbs",
     },
     class: {
-      template: 'systems/def-wiz-2/templates/actor/class.hbs',
+      template: "systems/def-wiz-2/templates/actor/class.hbs",
       scrollable: [""],
     },
     biography: {
-      template: 'systems/def-wiz-2/templates/actor/biography.hbs',
+      template: "systems/def-wiz-2/templates/actor/biography.hbs",
       scrollable: [""],
     },
     gear: {
-      template: 'systems/def-wiz-2/templates/actor/gear.hbs',
+      template: "systems/def-wiz-2/templates/actor/gear.hbs",
       scrollable: [""],
     },
     spells: {
-      template: 'systems/def-wiz-2/templates/actor/spells.hbs',
+      template: "systems/def-wiz-2/templates/actor/spells.hbs",
       scrollable: [""],
     },
   };
@@ -66,11 +66,11 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
   _configureRenderOptions(options) {
     super._configureRenderOptions(options);
     // Not all parts always render
-    options.parts = ['header', 'tabs', 'biography'];
+    options.parts = ["header", "tabs", "class", "biography"];
     // Don't show the other tabs if only limited view
     if (this.document.limited) return;
     // Control which parts show based on document subtype
-    options.parts.push('gear', 'spells');
+    options.parts.push("gear", "spells");
   }
 
   /* -------------------------------------------- */
@@ -105,12 +105,12 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
   /** @override */
   async _preparePartContext(partId, context) {
     switch (partId) {
-      case 'features':
-      case 'spells':
-      case 'gear':
+      case "features":
+      case "spells":
+      case "gear":
         context.tab = context.tabs[partId];
         break;
-      case 'biography':
+      case "biography":
         context.tab = context.tabs[partId];
         // Enrich biography info for display
         // Enrichment turns text like `[[/r 1d20]]` into buttons
@@ -138,38 +138,42 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
    */
   _getTabs(parts) {
     // If you have sub-tabs this is necessary to change
-    const tabGroup = 'primary';
+    const tabGroup = "primary";
     // Default tab for first time it's rendered this session
-    if (!this.tabGroups[tabGroup]) this.tabGroups[tabGroup] = 'biography';
+    if (!this.tabGroups[tabGroup]) this.tabGroups[tabGroup] = "class";
     return parts.reduce((tabs, partId) => {
       const tab = {
-        cssClass: '',
+        cssClass: "",
         group: tabGroup,
         // Matches tab property to
-        id: '',
+        id: "",
         // FontAwesome Icon, if you so choose
-        icon: '',
+        icon: "",
         // Run through localization
-        label: 'DEF_WIZ.Actor.Tabs.',
+        label: "DEF_WIZ.Actor.Tabs.",
       };
       switch (partId) {
-        case 'header':
-        case 'tabs':
+        case "header":
+        case "tabs":
           return tabs;
-        case 'biography':
-          tab.id = 'biography';
-          tab.label += 'Biography';
+        case "class":
+          tab.id = "class";
+          tab.label += "class";
           break;
-        case 'gear':
-          tab.id = 'gear';
-          tab.label += 'Gear';
+        case "biography":
+          tab.id = "biography";
+          tab.label += "Biography";
           break;
-        case 'spells':
-          tab.id = 'spells';
-          tab.label += 'Spells';
+        case "gear":
+          tab.id = "gear";
+          tab.label += "Gear";
+          break;
+        case "spells":
+          tab.id = "spells";
+          tab.label += "Spells";
           break;
       }
-      if (this.tabGroups[tabGroup] === tab.id) tab.cssClass = 'active';
+      if (this.tabGroups[tabGroup] === tab.id) tab.cssClass = "active";
       tabs[partId] = tab;
       return tabs;
     }, {});
@@ -187,34 +191,21 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
     // this sheet does with spells
     const gear = [];
     const features = [];
-    const spells = {
-      0: [],
-      1: [],
-      2: [],
-      3: [],
-      4: [],
-      5: [],
-      6: [],
-      7: [],
-      8: [],
-      9: [],
-    };
+    const spells = [];
 
     // Iterate through items, allocating to containers
     for (let i of this.document.items) {
       // Append to gear.
-      if (i.type === 'gear') {
+      if (i.type === "gear") {
         gear.push(i);
       }
       // Append to features.
-      else if (i.type === 'feature') {
+      else if (i.type === "feature") {
         features.push(i);
       }
       // Append to spells.
-      else if (i.type === 'spell') {
-        if (i.system.spellLevel != undefined) {
-          spells[i.system.spellLevel].push(i);
-        }
+      else if (i.type === "spell") {
+        spells.push(i);
       }
     }
 
@@ -225,7 +216,7 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
     // Sort then assign
     context.gear = gear.sort((a, b) => (a.sort || 0) - (b.sort || 0));
     context.features = features.sort((a, b) => (a.sort || 0) - (b.sort || 0));
-    context.spells = spells;
+    context.spells = spells.sort((a, b) => (a.sort || 0) - (b.sort || 0));
   }
 
   /**
@@ -267,7 +258,7 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
       {};
     const fp = new FilePicker({
       current,
-      type: 'image',
+      type: "image",
       redirectToRoot: img ? [img] : [],
       callback: (path) => {
         this.document.update({ [attr]: path });
@@ -326,7 +317,7 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
     // Loop through the dataset and add it to our docData
     for (const [dataKey, value] of Object.entries(target.dataset)) {
       // These data attributes are reserved for the action handling
-      if (['action', 'documentClass'].includes(dataKey)) continue;
+      if (["action", "documentClass"].includes(dataKey)) continue;
       // Nested properties require dot notation in the HTML, e.g. anything with `system`
       // An example exists in spells.hbs, with `data-system.spell-level`
       // which turns into the dataKey 'system.spellLevel'
@@ -364,22 +355,46 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
 
     // Handle item rolls.
     switch (dataset.rollType) {
-      case 'item':
+      case "item":
         const item = this._getEmbeddedDocument(target);
         if (item) return item.roll();
     }
 
     // Handle rolls that supply the formula directly.
     if (dataset.roll) {
-      let label = dataset.label ? `[ability] ${dataset.label}` : '';
+      let label = dataset.label ? `[ability] ${dataset.label}` : "";
       let roll = new Roll(dataset.roll, this.actor.getRollData());
       await roll.toMessage({
         speaker: ChatMessage.getSpeaker({ actor: this.actor }),
         flavor: label,
-        rollMode: game.settings.get('core', 'rollMode'),
+        rollMode: game.settings.get("core", "rollMode"),
       });
       return roll;
     }
+  }
+
+  /**Handle + button pressed
+   * @this DefWizActorSheet
+   * @param {PointerEvent} event   The originating click event
+   * @param {HTMLElement} target   The capturing HTML element which defined a [data-action]
+   */
+  static async _increaseStat(event, target) {
+    event.preventDefault();
+    const rollType = this._getStatType(target);
+    console.log(this.actor);
+    this.actor.updateStat(rollType, 1);
+  }
+
+  /**Handle - button pressed
+   * @this DefWizActorSheet
+   * @param {PointerEvent} event   The originating click event
+   * @param {HTMLElement} target   The capturing HTML element which defined a [data-action]
+   */
+  static async _decreaseStat(event, target) {
+    event.preventDefault();
+    const rollType = this._getStatType(target);
+    console.log(this.actor);
+    this.actor.updateStat(rollType, -1);
   }
 
   /** Helper Functions */
@@ -391,15 +406,31 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
    * @returns {Item | ActiveEffect} The embedded Item or ActiveEffect
    */
   _getEmbeddedDocument(target) {
-    const docRow = target.closest('li[data-document-class]');
-    if (docRow.dataset.documentClass === 'Item') {
+    const docRow = target.closest("li[data-document-class]");
+    if (docRow.dataset.documentClass === "Item") {
       return this.actor.items.get(docRow.dataset.itemId);
-    } else if (docRow.dataset.documentClass === 'ActiveEffect') {
+    } else if (docRow.dataset.documentClass === "ActiveEffect") {
       const parent =
         docRow.dataset.parentId === this.actor.id
           ? this.actor
           : this.actor.items.get(docRow?.dataset.parentId);
-    } else return console.warn('Could not find document class');
+    } else return console.warn("Could not find document class");
+  }
+
+  /** Works out whether you clicked a button for Wizard or Wild
+   * @param {HTMLElement} target    The element subject to search
+   * @returns {String} a string for the result type 
+   */
+  _getStatType(element) {
+    const parentID = element.parentElement.id;
+    if (parentID === "stat-wizard") {
+      return "wizard";
+    }
+    else if (parentID === "stat-wild") {
+      return "wild"
+    } else {
+      return undefined;
+    }
   }
 
   /***************
@@ -416,7 +447,7 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
    * @protected
    */
   async _onDropActiveEffect(event, data) {
-    const aeCls = getDocumentClass('ActiveEffect');
+    const aeCls = getDocumentClass("ActiveEffect");
     const effect = await aeCls.fromDropData(data);
     if (!this.actor.isOwner || !effect) return false;
     if (effect.target === this.actor)
@@ -432,7 +463,7 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
    */
   async _onSortActiveEffect(event, effect) {
     /** @type {HTMLElement} */
-    const dropTarget = event.target.closest('[data-effect-id]');
+    const dropTarget = event.target.closest("[data-effect-id]");
     if (!dropTarget) return;
     const target = this._getEmbeddedDocument(dropTarget);
 
@@ -474,7 +505,7 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
     }, {});
 
     // Update on the main actor
-    return this.actor.updateEmbeddedDocuments('ActiveEffect', directUpdates);
+    return this.actor.updateEmbeddedDocuments("ActiveEffect", directUpdates);
   }
 
   /**
@@ -502,7 +533,7 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
   async _onDropFolder(event, data) {
     if (!this.actor.isOwner) return [];
     const folder = await Folder.implementation.fromDropData(data);
-    if (folder.type !== 'Item') return [];
+    if (folder.type !== "Item") return [];
     const droppedItemData = await Promise.all(
       folder.contents.map(async (item) => {
         if (!(document instanceof Item)) item = await fromUuid(item.uuid);
@@ -522,7 +553,7 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
    */
   async _onDropItemCreate(itemData, event) {
     itemData = itemData instanceof Array ? itemData : [itemData];
-    return this.actor.createEmbeddedDocuments('Item', itemData);
+    return this.actor.createEmbeddedDocuments("Item", itemData);
   }
 
   /********************

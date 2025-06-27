@@ -41,4 +41,19 @@ export class DefWizActor extends Actor {
   getRollData() {
     return { ...super.getRollData(), ...(this.system.getRollData?.() ?? null) };
   }
+
+  async updateStat(statType, offset) {
+    switch (statType) {
+      case "wizard":
+        const wizardStat = this.system.stats.wizard.value;
+        await this.update({ "system.stats.wizard.value": wizardStat + offset });
+        break;
+      case "wild":
+        const wildStat = this.system.stats.wild.value;
+        await this.update({ "system.stats.wild.value": wildStat + offset });
+        break;
+      default:
+        break;
+    }
+  }
 }
