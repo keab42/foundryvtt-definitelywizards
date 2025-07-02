@@ -24,6 +24,7 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
       roll: this._onRoll,
       statPlus: this._increaseStat,
       statMinus: this._decreaseStat,
+      statReset: this._resetStat,
     },
     // Custom property that's merged into `this.options`
     dragDrop: [{ dragSelector: ".draggable", dropSelector: null }],
@@ -381,7 +382,6 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
   static async _increaseStat(event, target) {
     event.preventDefault();
     const rollType = this._getStatType(target);
-    console.log(this.actor);
     this.actor.updateStat(rollType, 1);
   }
 
@@ -393,8 +393,13 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
   static async _decreaseStat(event, target) {
     event.preventDefault();
     const rollType = this._getStatType(target);
-    console.log(this.actor);
     this.actor.updateStat(rollType, -1);
+  }
+
+  static async _resetStat(event, target) {
+    event.preventDefault();
+    const rollType = this._getStatType(target);
+    this.actor.resetStat(rollType);
   }
 
   /** Helper Functions */

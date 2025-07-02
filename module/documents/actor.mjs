@@ -1,8 +1,13 @@
+const { renderTemplate } = foundry.applications.handlebars;
+
+const maxStatValue = 7;
+
 /**
- * Extend the base Actor document by defining a custom roll data structure which is ideal for the Simple system.
+ * Extend the base Actor document with the functionality we need for tracking stats
  * @extends {Actor}
  */
 export class DefWizActor extends Actor {
+
   /** @override */
   prepareData() {
     // Prepare data for the actor. Calling the super version of this executes
@@ -43,17 +48,68 @@ export class DefWizActor extends Actor {
   }
 
   async updateStat(statType, offset) {
+    var oldValue = 0;
+    var newValue = 0;
+    var localizedChatLabel = "";
+    var updateData = {};
+
+    switch (statType) {
+      case "wizard":
+        oldValue = this.system.stats.wizard.value;
+        newValue = oldValue + offset;
+        localizedChatLabel = game.i18n.localize("DW.Wizard");
+        updateData = {"system.stats.wizard.value": newValue};
+        break;
+      case "wild":
+        oldValue = this.system.stats.wild.value;
+        newValue = oldValue + offset;
+        localizedChatLabel = game.i18n.localize("DW.Wild");
+        updateData = {"system.stats.wild.value": newValue};
+        break;
+      default:
+        return;
+    }
+
+    if (newValue <= maxStatValue && newValue > 0) {
+      await this.update(updateData);
+      await this._postUpdateToChat(localizedChatLabel, oldValue, newValue);
+    }
+  }
+
+  async resetStat(statType) {
     switch (statType) {
       case "wizard":
         const wizardStat = this.system.stats.wizard.value;
-        await this.update({ "system.stats.wizard.value": wizardStat + offset });
+        const newWizardValue = 2;
+        await this.update({ "system.stats.wizard.value": newWizardValue });
+        await this._postUpdateToChat(game.i18n.localize("DW.Wizard"), wizardStat, newWizardValue);
         break;
       case "wild":
         const wildStat = this.system.stats.wild.value;
-        await this.update({ "system.stats.wild.value": wildStat + offset });
+        const newWildValue = 2;
+        await this.update({ "system.stats.wild.value": newWildValue });
+        await this._postUpdateToChat(game.i18n.localize("DW.Wild"), wildStat, newWildValue);
         break;
       default:
         break;
     }
   }
+
+  async _postUpdateToChat(statType, oldValue, newValue) {
+        const template = "systems/def-wiz-2/templates/chat/actor-stat-update.hbs";
+
+        let templateData = {
+            statType: statType,
+            oldValue: oldValue,
+            newValue: newValue,
+            owner: this.id
+        };
+
+        ChatMessage.create({
+            user: game.user.id,
+            speaker: ChatMessage.getSpeaker({actor: this}),
+            content: await renderTemplate(template, templateData),
+            style: CONST.CHAT_MESSAGE_STYLES.OOC
+        });
+    }
 }

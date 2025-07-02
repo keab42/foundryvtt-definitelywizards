@@ -370,10 +370,6 @@
   height: 100%;
 }
 
-.tab {
-  max-height: 400px;
-}
-
 .tab.biography {
   flex: 1;
 }
@@ -533,8 +529,8 @@
 .definitely-wizards .sheet-header #stat-panel #stat-wizard,
 .definitely-wizards .sheet-header #stat-panel #stat-wild {
   grid-area: wizard;
-  gap: 0;
-  margin-top: -10px;
+  gap: 5px;
+  margin-top: 10px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: auto 1fr;
@@ -561,29 +557,50 @@
 .definitely-wizards .sheet-header #stat-panel .stat-title {
   grid-area: title;
 }
-.definitely-wizards .sheet-header #stat-panel .stat-button {
-  height: 40px;
-  grid-area: icon;
-}
 .definitely-wizards .sheet-header #stat-panel .stat-button-plus {
-  height: 25px;
+  height: 40px;
+  width: auto;
   grid-area: plus;
+  background: url(/systems/definitely-wizards/resources/icons/plus.svg);
+  background-repeat: no-repeat;
+  background-size: 75% auto;
+  background-position: center center;
 }
 .definitely-wizards .sheet-header #stat-panel .stat-button-minus {
-  height: 25px;
+  height: 40px;
+  width: auto;
   grid-area: minus;
+  background: url(/systems/definitely-wizards/resources/icons/minus.svg);
+  background-repeat: no-repeat;
+  background-size: 75% auto;
+  background-position: center center;
 }
 .definitely-wizards .sheet-header #stat-panel .stat-button-reset {
-  height: 25px;
+  height: 40px;
+  width: auto;
   grid-area: reset;
+  background: url(/systems/definitely-wizards/resources/icons/reset.svg);
+  background-repeat: no-repeat;
+  background-size: 75% auto;
+  background-position: center center;
 }
 .definitely-wizards .sheet-header #stat-panel .stat-roll-single {
-  height: 35px;
+  height: 50px;
+  width: auto;
   grid-area: die;
+  background: url(/systems/definitely-wizards/resources/icons/die-six.svg);
+  background-repeat: no-repeat;
+  background-size: 75% auto;
+  background-position: center center;
 }
 .definitely-wizards .sheet-header #stat-panel .stat-roll-double {
-  height: 35px;
+  height: 50px;
+  width: auto;
   grid-area: dice;
+  background: url(/systems/definitely-wizards/resources/icons/die-six-double.svg);
+  background-repeat: no-repeat;
+  background-size: 75% auto;
+  background-position: center center;
 }
 
 /*# sourceMappingURL=definitely-wizards.css.map */
