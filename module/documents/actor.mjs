@@ -58,13 +58,13 @@ export class DefWizActor extends Actor {
         oldValue = this.system.stats.wizard.value;
         newValue = oldValue + offset;
         localizedChatLabel = game.i18n.localize("DW.Wizard");
-        updateData = {"system.stats.wizard.value": newValue};
+        updateData = { "system.stats.wizard.value": newValue };
         break;
       case "wild":
         oldValue = this.system.stats.wild.value;
         newValue = oldValue + offset;
         localizedChatLabel = game.i18n.localize("DW.Wild");
-        updateData = {"system.stats.wild.value": newValue};
+        updateData = { "system.stats.wild.value": newValue };
         break;
       default:
         return;
@@ -72,7 +72,7 @@ export class DefWizActor extends Actor {
 
     if (newValue <= maxStatValue && newValue > 0) {
       await this.update(updateData);
-      await this._postUpdateToChat(localizedChatLabel, oldValue, newValue);
+      await this._postStatUpdateToChat(localizedChatLabel, oldValue, newValue);
     }
   }
 
@@ -82,34 +82,96 @@ export class DefWizActor extends Actor {
         const wizardStat = this.system.stats.wizard.value;
         const newWizardValue = 2;
         await this.update({ "system.stats.wizard.value": newWizardValue });
-        await this._postUpdateToChat(game.i18n.localize("DW.Wizard"), wizardStat, newWizardValue);
+        await this._postStatUpdateToChat(game.i18n.localize("DW.Wizard"), wizardStat, newWizardValue);
         break;
       case "wild":
         const wildStat = this.system.stats.wild.value;
         const newWildValue = 2;
         await this.update({ "system.stats.wild.value": newWildValue });
-        await this._postUpdateToChat(game.i18n.localize("DW.Wild"), wildStat, newWildValue);
+        await this._postStatUpdateToChat(game.i18n.localize("DW.Wild"), wildStat, newWildValue);
         break;
       default:
         break;
     }
   }
 
-  async _postUpdateToChat(statType, oldValue, newValue) {
-        const template = "systems/def-wiz-2/templates/chat/actor-stat-update.hbs";
+  async _postStatUpdateToChat(statType, oldValue, newValue) {
+    const template = "systems/def-wiz-2/templates/chat/actor-stat-update.hbs";
 
-        let templateData = {
-            statType: statType,
-            oldValue: oldValue,
-            newValue: newValue,
-            owner: this.id
-        };
+    let templateData = {
+      statType: statType,
+      oldValue: oldValue,
+      newValue: newValue,
+      owner: this.id
+    };
 
-        ChatMessage.create({
-            user: game.user.id,
-            speaker: ChatMessage.getSpeaker({actor: this}),
-            content: await renderTemplate(template, templateData),
-            style: CONST.CHAT_MESSAGE_STYLES.OOC
-        });
+    ChatMessage.create({
+      user: game.user.id,
+      speaker: ChatMessage.getSpeaker({ actor: this }),
+      content: await renderTemplate(template, templateData),
+      style: CONST.CHAT_MESSAGE_STYLES.OOC
+    });
+  }
+
+  async updateClass(classKey) {
+    await this.update({ "system.playerClass.value": classKey });
+    await this._postClassUpdateToChat(classKey);
+  }
+
+  async _postClassUpdateToChat(classKey) {
+    const template = "systems/def-wiz-2/templates/chat/actor-class-update.hbs";
+
+    const className = CONFIG.DEF_WIZ.classNames[classKey];
+    const classDesc = CONFIG.DEF_WIZ.classDescriptions[classKey];
+
+    let templateData = {
+      className: className,
+      classDesc: classDesc,
+      owner: this.id
+    };
+
+    ChatMessage.create({
+      user: game.user.id,
+      speaker: ChatMessage.getSpeaker({ actor: this }),
+      content: await renderTemplate(template, templateData),
+      style: CONST.CHAT_MESSAGE_STYLES.OOC
+    });
+  }
+
+  async updateProp(propVal, propKey) {
+    let propName = "";
+
+    switch (propVal){
+      case 1:
+        await this.update({ "system.playerProps.prop1.value": propKey });
+        propName = CONFIG.DEF_WIZ.props1Names[propKey];
+        await this._postPropUpdateToChat(propName);
+        break;
+      case 2:
+        await this.update({ "system.playerProps.prop2.value": propKey });
+        propName = CONFIG.DEF_WIZ.props2Names[propKey];
+        await this._postPropUpdateToChat(propName);
+        break;
+      default: 
+        break;
     }
+    
+  }
+
+  async _postPropUpdateToChat(propName) {
+    const template = "systems/def-wiz-2/templates/chat/actor-prop-update.hbs";
+
+    let templateData = {
+      propName: propName,
+      owner: this.id
+    };
+
+    ChatMessage.create({
+      user: game.user.id,
+      speaker: ChatMessage.getSpeaker({ actor: this }),
+      content: await renderTemplate(template, templateData),
+      style: CONST.CHAT_MESSAGE_STYLES.OOC
+    });
+  }
+
 }

@@ -18,7 +18,7 @@ export default class DefWizCharacter extends DefWizActorBase {
     });
 
     // Iterate over ability names and create a new SchemaField for each.
-    schema.abilities = new fields.SchemaField(
+    /*schema.abilities = new fields.SchemaField(
       Object.keys(CONFIG.DEF_WIZ.abilities).reduce((obj, ability) => {
         obj[ability] = new fields.SchemaField({
           value: new fields.NumberField({
@@ -29,7 +29,7 @@ export default class DefWizCharacter extends DefWizActorBase {
         });
         return obj;
       }, {})
-    );
+    );*/
 
     return schema;
   }

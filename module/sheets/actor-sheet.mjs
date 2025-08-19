@@ -25,6 +25,10 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
       statPlus: this._increaseStat,
       statMinus: this._decreaseStat,
       statReset: this._resetStat,
+      rollForClass: this._rollForClass,
+      classSelect: this._onClassChanged,
+      rollForProp: this._rollForProp,
+      propSelect: this._onPropChanged,
     },
     // Custom property that's merged into `this.options`
     dragDrop: [{ dragSelector: ".draggable", dropSelector: null }],
@@ -91,6 +95,11 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
       flags: this.actor.flags,
       // Adding a pointer to CONFIG.DEF_WIZ
       config: CONFIG.DEF_WIZ,
+      classes: CONFIG.DEF_WIZ.classes,
+      classNames: CONFIG.DEF_WIZ.classNames,
+      classDescriptions: CONFIG.DEF_WIZ.classDescriptions,
+      props1: CONFIG.DEF_WIZ.props1Names,
+      props2: CONFIG.DEF_WIZ.props2Names,
       tabs: this._getTabs(options.parts),
       // Necessary for formInput and formFields helpers
       fields: this.document.schema.fields,
@@ -106,7 +115,18 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
   /** @override */
   async _preparePartContext(partId, context) {
     switch (partId) {
-      case "features":
+      case "class":
+        context.tab = context.tabs[partId];
+        context.enrichedClassDesc = await TextEditor.enrichHTML(
+          CONFIG.DEF_WIZ.classDescriptions[this.actor.system.playerClass],
+          {
+            // Data to fill in for inline rolls
+            rollData: this.actor.getRollData(),
+            // Relative UUID resolution
+            relativeTo: this.actor,
+          }
+        );
+        break;
       case "spells":
       case "gear":
         context.tab = context.tabs[partId];
@@ -396,10 +416,69 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
     this.actor.updateStat(rollType, -1);
   }
 
+  /**Handle reset button pressed
+   * @this DefWizActorSheet
+   * @param {PointerEvent} event   The originating click event
+   * @param {HTMLElement} target   The capturing HTML element which defined a [data-action]
+   */
   static async _resetStat(event, target) {
     event.preventDefault();
     const rollType = this._getStatType(target);
     this.actor.resetStat(rollType);
+  }
+
+  static async _rollForClass(event, target) {
+    event.preventDefault();
+    const dataset = target.dataset;
+
+    const roll = new Roll(dataset.roll, this.actor.getRollData());
+    await roll.evaluate();
+
+    const total = roll.total;
+    const classes = CONFIG.DEF_WIZ.classes;
+    const playerClass = classes[total];
+
+    await this.actor.updateClass(playerClass);
+  }
+
+  static async _onClassChanged(event, target) {
+    this.actor.updateClass(event.target.value);
+  }
+
+  static async _rollForProp(event, target) {
+    event.preventDefault();
+    const dataset = target.dataset;
+
+    const roll = new Roll(dataset.roll, this.actor.getRollData());
+    await roll.evaluate();
+
+    const total = roll.total;
+
+    switch (target.name) {
+      case "prop1-roll":
+        let prop1 = CONFIG.DEF_WIZ.props1[total];
+        await this.actor.updateProp(1, prop1);
+        break;
+      case "prop2-roll":
+        let prop2 = CONFIG.DEF_WIZ.props2[total];
+        await this.actor.updateProp(2, prop2);
+        break;
+      default:
+        break;
+    }
+  }
+
+  static async _onPropChanged(event, target) {
+    switch (target.name) {
+      case "prop1-select":
+        await this.actor.updateProp(1, event.target.value);
+        break;
+      case "prop2-select":
+        await this.actor.updateProp(2, event.target.value);
+        break;
+      default:
+        break;
+    }
   }
 
   /** Helper Functions */

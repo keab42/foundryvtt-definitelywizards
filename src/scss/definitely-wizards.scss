@@ -132,4 +132,86 @@
     }
   }
 
+  .class-tab {
+
+    #class-tab-content {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: auto 1fr;
+
+      #attributes-panel {
+        margin-right: 0.5rem;
+
+        #attributes {
+          display: grid;
+          gap: variables.$margin-md;
+          margin-top: variables.$margin-md;
+
+          label {
+            grid-area: attr-label;
+          }
+
+          select {
+            grid-area: attr-select;
+          }
+
+          button {
+            grid-area: attr-roller;
+          }
+
+          .customTitle {
+            grid-area: attr-custom;
+          }
+        }
+
+        .attribute {
+          align-items: center;
+          display: grid;
+          gap: variables.$margin-md;
+          grid-template-columns: 72px 200px 1fr;
+          grid-template-areas: "attr-label attr-select attr-roller" ". attr-custom ."
+        }
+      }
+
+      .attribute-roll {
+        height: 25px;
+        width: 25px;
+        background: url(/systems/definitely-wizards/resources/icons/die-six.svg);
+        background-repeat: no-repeat;
+        background-size: 75% auto;
+        background-position: center center;
+      }
+
+      .customTitle {
+        display: none;
+      }
+
+      #bio-panel {
+        display: grid;
+        grid-template-rows: max-content 1fr;
+
+        .editor {
+          min-height: 150px;
+          max-height: 260px;
+          overflow-y: auto;
+        }
+      }
+
+      #class-description-panel {
+        display: grid;
+        grid-template-rows: max-content 1fr;
+        margin-right: 0.5rem;
+
+        .class-description {
+          min-height: 50px;
+          max-height: 100px;
+          overflow-y: auto;
+          border: 0;
+          background: transparent;
+        }
+      }
+    }
+  }
+
 }
+

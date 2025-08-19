@@ -1,101 +1,51 @@
 {{! Features Tab }}
-<section
-  class='tab features scrollable {{tab.cssClass}}'
-  data-group='primary'
-  data-tab='class'
->
-  <section class='grid grid-3col'>
-    <aside class='sidebar'>
-      {{! The grid classes are defined in scss/global/_grid.scss. To use,
-          use both the "grid" and "grid-Ncol" class where "N" can be any number
-          from 1 to 12 and will create that number of columns.  }}
-      <div class='abilities flexcol'>
-        {{#each system.abilities as |ability key|}}
-          <div class='ability flexrow flex-group-center'>
-            <label
-              class='resource-label rollable flexlarge align-left'
-              data-action='roll'
-              data-roll='d20+@abilities.{{key}}.mod'
-              data-label='{{localize (lookup @root.config.abilities key)}}'
-            >{{localize (lookup @root.config.abilities key)}}</label>
-            <input
-              type='text'
-              name='system.abilities.{{key}}.value'
-              value='{{ability.value}}'
-              class="ability-score"
-              data-dtype='Number'
-            />
-            <span
-              class='ability-mod rollable'
-              data-action='roll'
-              data-roll='d20+@abilities.{{key}}.mod'
-              data-label='{{localize (lookup @root.config.abilities key)}}'
-            >{{numberFormat ability.mod decimals=0 sign=true}}</span>
+<section class='tab features scrollable {{tab.cssClass}}' data-group='primary' data-tab='class'>
+  <section class='class-tab'>
+    <div id="class-tab-content">
+      {{!- Class Information}}
+      <div id="attributes-panel">
+        <h2>{{localize 'DW.AttributesTitle'}}</h2>
+        <div id="attributes">
+          <div class="attribute" id="player-class">
+            <label>{{localize 'DW.ClassDescriptor'}}</label>
+            <select class="attribute-select" name="player-class-dropdown" data-type="String" data-action="classSelect">
+              {{selectOptions classNames selected=system.playerClass.value localize=true}}
+            </select>
+            <button class="attribute-roll expand no-border" data-roll="1d11" data-action="rollForClass"></button>
+            <input class="customTitle customClass" name="customClass" type="text"
+              placeholder="{{localize DW.CustomClass}}" />
           </div>
-        {{/each}}
+          <div class="attribute">
+            <label>{{localize 'DW.Prop1'}}</label>
+            <select class="prop-select" name="prop1-select" data-type="String" data-action="propSelect">
+              {{selectOptions props1 selected=system.playerProps.prop1.value localize=true}}
+            </select>
+            <button class="attribute-roll expand no-border" name="prop1-roll" data-roll="1d7" data-action="rollForProp"></button>
+            <input class="customTitle customProp1" name="customProp1" type="text"
+              placeholder="{{localize DW.CustomProp}}" />
+          </div>
+          <div class="attribute">
+            <label>{{localize 'DW.Prop2'}}</label>
+            <select class="prop-select" name="prop2-select" data-type="String" data-action="propSelect">
+              {{selectOptions props2 selected=system.playerProps.prop2.value localize=true}}
+            </select>
+            <button class="attribute-roll expand no-border" name="prop2-roll" data-roll="1d7" data-action="rollForProp"></button>
+            <input class="customTitle customProp2" name="customProp2" type="text"
+              placeholder="{{localize DW.CustomItem}}" />
+          </div>
+        </div>
       </div>
-    </aside>
-
-    {{! For the main features list, span the right two columns }}
-    <section class='main grid-span-2'>
-      <ol class='items-list'>
-        <li class='item flexrow items-header'>
-          <div class='item-name'>{{localize 'Name'}}</div>
-          <div class='item-controls'>
-            {{#if @root.editable}}
-              <a
-                class='item-control item-create'
-                data-tooltip='Create item'
-                data-action='createDoc'
-                data-document-class='Item'
-                data-type='feature'
-              >
-                <i class='fas fa-plus'></i>
-                {{localize 'DOCUMENT.New' type='feature'}}
-              </a>
-            {{/if}}
-          </div>
-        </li>
-        {{#each features as |item id|}}
-          <li
-            class='item flexrow draggable'
-            data-item-id='{{item._id}}'
-            data-document-class='Item'
-          >
-            <div class='item-name'>
-              <div class='item-image'>
-                <a class='rollable' data-roll-type='item' data-action='roll'>
-                  <img
-                    src='{{item.img}}'
-                    data-tooltip='{{item.name}}'
-                    width='24'
-                    height='24'
-                  />
-                </a>
-              </div>
-              <div>{{item.name}}</div>
-            </div>
-            <div class='item-controls'>
-              <a
-                class='item-control item-edit'
-                data-tooltip='{{localize "DOCUMENT.Update" type='feature'}}'
-                data-action='viewDoc'
-              >
-                <i class='fas fa-edit'></i>
-              </a>
-              {{#if @root.editable}}
-                <a
-                  class='item-control item-delete'
-                  data-tooltip='{{localize "DOCUMENT.Delete" type='feature'}}'
-                  data-action='deleteDoc'
-                >
-                  <i class='fas fa-trash'></i>
-                </a>
-              {{/if}}
-            </div>
-          </li>
-        {{/each}}
-      </ol>
-    </section>
+      {{!-- Class Description --}}
+      <div id="class-description-panel">
+        <h2>{{localize "DW.ClassDescription"}}</h2>
+        {{#if editable}}
+        <prose-mirror name="system.classDescription" data-document-uuid="{{actor.uuid}}" value="{{system.classDescription}}"
+          collaborate="true" toggled="true">
+          {{{enrichedClassDesc localize=true}}}
+        </prose-mirror>
+        {{else}} {{{enrichedClassDesc localize=true}}}
+        {{/if}}
+      </div>
+    </div>
   </section>
 </section>
