@@ -17,19 +17,22 @@ export default class DefWizCharacter extends DefWizActorBase {
       }),
     });
 
-    // Iterate over ability names and create a new SchemaField for each.
-    /*schema.abilities = new fields.SchemaField(
-      Object.keys(CONFIG.DEF_WIZ.abilities).reduce((obj, ability) => {
-        obj[ability] = new fields.SchemaField({
-          value: new fields.NumberField({
-            ...requiredInteger,
-            initial: 10,
-            min: 0,
-          }),
-        });
-        return obj;
-      }, {})
-    );*/
+    schema.playerClass = new fields.SchemaField({
+      value: new fields.StringField(),
+      description: new fields.StringField(),
+      customClassName: new fields.StringField(),
+    });
+
+    schema.playerProps = new fields.SchemaField({
+      prop1: new fields.SchemaField({
+        value: new fields.StringField(),
+        customPropName: new fields.StringField(),
+      }),
+      prop2: new fields.SchemaField({
+        value: new fields.StringField(),
+        customPropName: new fields.StringField(),
+      })
+    });
 
     return schema;
   }

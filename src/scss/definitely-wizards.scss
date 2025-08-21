@@ -49,7 +49,7 @@
         gap: 5px;
         margin-top: 10px;
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: max-content max-content max-content max-content;
         grid-template-rows: auto 1fr;
         grid-template-areas: "title title title ." "value die dice ." "plus minus reset .";
         align-items: center;
@@ -59,7 +59,7 @@
           font-family: Title;
           height: 50px;
           text-align: center;
-          width: 40px;
+          width: 50px;
           border: 0;
           background: transparent;
           grid-area: value;
@@ -79,52 +79,52 @@
       }
 
       .stat-button-plus {
-        height: 40px;
-        width: auto;
+        height: 50px;
+        width: 50px;
         grid-area: plus;
         background: url(/systems/definitely-wizards/resources/icons/plus.svg);
         background-repeat: no-repeat;
-        background-size: 75% auto;
+        background-size: contain;
         background-position: center center;
       }
 
       .stat-button-minus {
-        height: 40px;
-        width: auto;
+        height: 50px;
+        width: 50px;
         grid-area: minus;
         background: url(/systems/definitely-wizards/resources/icons/minus.svg);
         background-repeat: no-repeat;
-        background-size: 75% auto;
+        background-size: contain;
         background-position: center center;
       }
 
       .stat-button-reset {
-        height: 40px;
-        width: auto;
+        height: 50px;
+        width: 50px;
         grid-area: reset;
         background: url(/systems/definitely-wizards/resources/icons/reset.svg);
         background-repeat: no-repeat;
-        background-size: 75% auto;
+        background-size: contain;
         background-position: center center;
       }
 
       .stat-roll-single {
         height: 50px;
-        width: auto;
+        width: 50px;
         grid-area: die;
         background: url(/systems/definitely-wizards/resources/icons/die-six.svg);
         background-repeat: no-repeat;
-        background-size: 75% auto;
+        background-size: contain;
         background-position: center center;
       }
 
       .stat-roll-double {
         height: 50px;
-        width: auto;
+        width: 50px;
         grid-area: dice;
         background: url(/systems/definitely-wizards/resources/icons/die-six-double.svg);
         background-repeat: no-repeat;
-        background-size: 75% auto;
+        background-size: contain;
         background-position: center center;
       }
 
@@ -136,7 +136,7 @@
 
     #class-tab-content {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: auto auto;
       grid-template-rows: auto 1fr;
 
       #attributes-panel {
@@ -147,29 +147,26 @@
           gap: variables.$margin-md;
           margin-top: variables.$margin-md;
 
-          label {
-            grid-area: attr-label;
-          }
-
-          select {
-            grid-area: attr-select;
-          }
-
-          button {
-            grid-area: attr-roller;
-          }
-
-          .customTitle {
-            grid-area: attr-custom;
-          }
-        }
-
-        .attribute {
           align-items: center;
           display: grid;
           gap: variables.$margin-md;
-          grid-template-columns: 72px 200px 1fr;
-          grid-template-areas: "attr-label attr-select attr-roller" ". attr-custom ."
+          grid-template-columns: max-content max-content min-content;
+
+          label {
+            grid-column: 1;
+          }
+
+          select {
+            grid-column: 2;
+          }
+
+          button {
+            grid-column: 3;
+          }
+
+          .customTitle {
+            grid-column: 2;
+          }
         }
       }
 
@@ -180,10 +177,6 @@
         background-repeat: no-repeat;
         background-size: 75% auto;
         background-position: center center;
-      }
-
-      .customTitle {
-        display: none;
       }
 
       #bio-panel {
@@ -214,4 +207,3 @@
   }
 
 }
-

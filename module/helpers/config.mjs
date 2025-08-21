@@ -1,10 +1,5 @@
 export const DEF_WIZ = {};
 
-/**
- * The set of Ability Scores used within the system.
- * @type {Object}
- */
-
 DEF_WIZ.classes = ["none",
   "d6familiars",
   "alchemist",

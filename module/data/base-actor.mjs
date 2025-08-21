@@ -25,20 +25,7 @@ export default class DefWizActorBase extends foundry.abstract.TypeDataModel {
         }),
       }),
     });
-
-    schema.playerClass = new fields.SchemaField({
-      value: new fields.StringField(),
-    });
-
-    schema.playerProps = new fields.SchemaField({
-      prop1: new fields.SchemaField({
-        value: new fields.StringField(),
-      }),
-      prop2: new fields.SchemaField({
-        value: new fields.StringField(),
-      })
-    });
-
+    
     schema.biography = new fields.HTMLField();
 
     return schema;

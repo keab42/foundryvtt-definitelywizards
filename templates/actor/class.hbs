@@ -6,45 +6,42 @@
       <div id="attributes-panel">
         <h2>{{localize 'DW.AttributesTitle'}}</h2>
         <div id="attributes">
-          <div class="attribute" id="player-class">
             <label>{{localize 'DW.ClassDescriptor'}}</label>
             <select class="attribute-select" name="player-class-dropdown" data-type="String" data-action="classSelect">
               {{selectOptions classNames selected=system.playerClass.value localize=true}}
             </select>
             <button class="attribute-roll expand no-border" data-roll="1d11" data-action="rollForClass"></button>
-            <input class="customTitle customClass" name="customClass" type="text"
-              placeholder="{{localize DW.CustomClass}}" />
-          </div>
-          <div class="attribute">
+            {{#if system.playerClass.customClassName}}
+            <input class="customTitle customClass" name="system.playerClass.customClassName" type="text"
+              value="{{system.playerClass.customClassName}}" placeholder="{{localize DW.CustomClass}}" />
+            {{/if}}
             <label>{{localize 'DW.Prop1'}}</label>
             <select class="prop-select" name="prop1-select" data-type="String" data-action="propSelect">
               {{selectOptions props1 selected=system.playerProps.prop1.value localize=true}}
             </select>
-            <button class="attribute-roll expand no-border" name="prop1-roll" data-roll="1d7" data-action="rollForProp"></button>
-            <input class="customTitle customProp1" name="customProp1" type="text"
-              placeholder="{{localize DW.CustomProp}}" />
-          </div>
-          <div class="attribute">
+            <button class="attribute-roll expand no-border" name="prop1-roll" data-roll="1d7"
+              data-action="rollForProp"></button>
+            {{#if system.playerProps.prop1.customPropName}}
+            <input class="customTitle customProp1" name="system.playerProps.prop1.customPropName" type="text"
+              value="{{system.playerProps.prop1.customPropName}}" placeholder="{{localize DW.CustomProp}}" />
+            {{/if}}
             <label>{{localize 'DW.Prop2'}}</label>
             <select class="prop-select" name="prop2-select" data-type="String" data-action="propSelect">
               {{selectOptions props2 selected=system.playerProps.prop2.value localize=true}}
             </select>
-            <button class="attribute-roll expand no-border" name="prop2-roll" data-roll="1d7" data-action="rollForProp"></button>
-            <input class="customTitle customProp2" name="customProp2" type="text"
-              placeholder="{{localize DW.CustomItem}}" />
-          </div>
+            <button class="attribute-roll expand no-border" name="prop2-roll" data-roll="1d7"
+              data-action="rollForProp"></button>
+            {{#if system.playerProps.prop2.customPropName}}
+            <input class="customTitle customProp2" name="system.playerProps.prop2.customPropName" type="text"
+              value="{{system.playerProps.prop2.customPropName}}" placeholder="{{localize DW.CustomProp}}" />
+            {{/if}}
         </div>
       </div>
       {{!-- Class Description --}}
       <div id="class-description-panel">
         <h2>{{localize "DW.ClassDescription"}}</h2>
-        {{#if editable}}
-        <prose-mirror name="system.classDescription" data-document-uuid="{{actor.uuid}}" value="{{system.classDescription}}"
-          collaborate="true" toggled="true">
-          {{{enrichedClassDesc localize=true}}}
-        </prose-mirror>
-        {{else}} {{{enrichedClassDesc localize=true}}}
-        {{/if}}
+        {{editor system.playerClass.description target="system.playerClass.description" button=true owner=owner
+        editable=editable}}
       </div>
     </div>
   </section>

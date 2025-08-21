@@ -117,15 +117,6 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
     switch (partId) {
       case "class":
         context.tab = context.tabs[partId];
-        context.enrichedClassDesc = await TextEditor.enrichHTML(
-          CONFIG.DEF_WIZ.classDescriptions[this.actor.system.playerClass],
-          {
-            // Data to fill in for inline rolls
-            rollData: this.actor.getRollData(),
-            // Relative UUID resolution
-            relativeTo: this.actor,
-          }
-        );
         break;
       case "spells":
       case "gear":

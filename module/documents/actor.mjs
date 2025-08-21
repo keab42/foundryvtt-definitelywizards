@@ -114,7 +114,17 @@ export class DefWizActor extends Actor {
   }
 
   async updateClass(classKey) {
+    const classDesc = game.i18n.localize(CONFIG.DEF_WIZ.classDescriptions[classKey]);
+
     await this.update({ "system.playerClass.value": classKey });
+    await this.update({ "system.playerClass.description": classDesc});
+
+    let customClass = "";
+    if (classKey == "custom") {
+      customClass = game.i18n.localize("DW.CustomClass");
+    }
+    await this.update({ "system.playerClass.customClassName": customClass});
+
     await this._postClassUpdateToChat(classKey);
   }
 
@@ -141,14 +151,21 @@ export class DefWizActor extends Actor {
   async updateProp(propVal, propKey) {
     let propName = "";
 
+    let customProp = "";
+    if (propKey == "custom") {
+      customProp = game.i18n.localize("DW.CustomProp");
+    }
+
     switch (propVal){
       case 1:
         await this.update({ "system.playerProps.prop1.value": propKey });
+        await this.update({ "system.playerProps.prop1.customPropName": customProp})
         propName = CONFIG.DEF_WIZ.props1Names[propKey];
         await this._postPropUpdateToChat(propName);
         break;
       case 2:
         await this.update({ "system.playerProps.prop2.value": propKey });
+        await this.update({ "system.playerProps.prop2.customPropName": customProp})
         propName = CONFIG.DEF_WIZ.props2Names[propKey];
         await this._postPropUpdateToChat(propName);
         break;
