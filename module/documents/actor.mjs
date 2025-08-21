@@ -1,6 +1,5 @@
+import { checkGameState } from "../helpers/gamestate.mjs";
 const { renderTemplate } = foundry.applications.handlebars;
-
-const maxStatValue = 7;
 
 /**
  * Extend the base Actor document with the functionality we need for tracking stats
@@ -70,10 +69,10 @@ export class DefWizActor extends Actor {
         return;
     }
 
-    if (newValue <= maxStatValue && newValue > 0) {
-      await this.update(updateData);
-      await this._postStatUpdateToChat(localizedChatLabel, oldValue, newValue);
-    }
+    await this.update(updateData);
+    await this._postStatUpdateToChat(localizedChatLabel, oldValue, newValue);
+
+    checkGameState(this);
   }
 
   async resetStat(statType) {
@@ -117,13 +116,13 @@ export class DefWizActor extends Actor {
     const classDesc = game.i18n.localize(CONFIG.DEF_WIZ.classDescriptions[classKey]);
 
     await this.update({ "system.playerClass.value": classKey });
-    await this.update({ "system.playerClass.description": classDesc});
+    await this.update({ "system.playerClass.description": classDesc });
 
     let customClass = "";
     if (classKey == "custom") {
       customClass = game.i18n.localize("DW.CustomClass");
     }
-    await this.update({ "system.playerClass.customClassName": customClass});
+    await this.update({ "system.playerClass.customClassName": customClass });
 
     await this._postClassUpdateToChat(classKey);
   }
@@ -156,23 +155,23 @@ export class DefWizActor extends Actor {
       customProp = game.i18n.localize("DW.CustomProp");
     }
 
-    switch (propVal){
+    switch (propVal) {
       case 1:
         await this.update({ "system.playerProps.prop1.value": propKey });
-        await this.update({ "system.playerProps.prop1.customPropName": customProp})
+        await this.update({ "system.playerProps.prop1.customPropName": customProp })
         propName = CONFIG.DEF_WIZ.props1Names[propKey];
         await this._postPropUpdateToChat(propName);
         break;
       case 2:
         await this.update({ "system.playerProps.prop2.value": propKey });
-        await this.update({ "system.playerProps.prop2.customPropName": customProp})
+        await this.update({ "system.playerProps.prop2.customPropName": customProp })
         propName = CONFIG.DEF_WIZ.props2Names[propKey];
         await this._postPropUpdateToChat(propName);
         break;
-      default: 
+      default:
         break;
     }
-    
+
   }
 
   async _postPropUpdateToChat(propName) {

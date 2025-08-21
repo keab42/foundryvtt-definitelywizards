@@ -1,5 +1,7 @@
 const { api, sheets } = foundry.applications;
+const { renderTemplate } = foundry.applications.handlebars;
 const TextEditor = foundry.applications.ux.TextEditor;
+
 
 /**
  * Extend the basic ActorSheet with some very simple modifications
@@ -21,7 +23,7 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
       createDoc: this._createDoc,
       deleteDoc: this._deleteDoc,
       toggleEffect: this._toggleEffect,
-      roll: this._onRoll,
+      rollStat: this._onRoll,
       statPlus: this._increaseStat,
       statMinus: this._decreaseStat,
       statReset: this._resetStat,
@@ -363,26 +365,57 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
    */
   static async _onRoll(event, target) {
     event.preventDefault();
+
     const dataset = target.dataset;
+    console.log(dataset);
+    const isWizard = dataset.stattype == "wizard";
+    const template = "systems/def-wiz-2/templates/chat/actor-skill-roll.hbs";
 
-    // Handle item rolls.
-    switch (dataset.rollType) {
-      case "item":
-        const item = this._getEmbeddedDocument(target);
-        if (item) return item.roll();
+    let currentStatValue = 0;
+
+    if (isWizard) {
+      currentStatValue = this.actor.system.stats.wizard.value;
+    } else {
+      currentStatValue = this.actor.system.stats.wild.value;
     }
 
-    // Handle rolls that supply the formula directly.
-    if (dataset.roll) {
-      let label = dataset.label ? `[ability] ${dataset.label}` : "";
-      let roll = new Roll(dataset.roll, this.actor.getRollData());
-      await roll.toMessage({
-        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-        flavor: label,
-        rollMode: game.settings.get("core", "rollMode"),
-      });
-      return roll;
+    const roll = new Roll(dataset.roll, this.actor.getRollData());
+    await roll.evaluate();
+
+    const isSuccess = roll.total <= currentStatValue;
+    
+    console.log(roll);
+
+    console.log(roll.terms[0].results);
+
+    await roll.toMessage({
+      speaker: ChatMessage.getSpeaker({actor: this.actor})
+    });
+
+    let templateData = {
+      isWizardRoll: isWizard,
+      isSuccess: isSuccess,
+      diceFormula: roll.formula,
+      diceTotal: roll.total,
+      owner: this.actor.id
+    };
+
+    const rollMessage = {
+      user: game.user.id,
+      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+      content: await renderTemplate(template, templateData),
+      rolls: roll,
+      sound: CONFIG.sounds.dice
+    };
+
+    await ChatMessage.create(rollMessage);
+
+    if (isSuccess && isWizard) {
+      this.actor.updateStat(dataset.stattype, 1)
     }
+
+    return roll;
+
   }
 
   /**Handle + button pressed
