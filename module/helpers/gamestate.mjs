@@ -1,5 +1,5 @@
 export function checkGameState(actor) {
-    const wildStat = actor.system.stats.wild.value;
+    const wildStat = actor.system.coreStats.wild;
 
     if (wildStat >= 7) {
         ChatMessage.create({

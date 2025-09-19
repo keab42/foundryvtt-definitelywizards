@@ -6,26 +6,22 @@ export default class DefWizActorBase extends foundry.abstract.TypeDataModel {
     const requiredInteger = { required: true, nullable: false, integer: true };
     const schema = {};
 
-    schema.stats = new fields.SchemaField({
-      wizard: new fields.SchemaField({
-        value: new fields.NumberField({
-          ...requiredInteger,
-          initial: 3,
-          min: 0,
-          max: 7,
-        }),
+    schema.coreStats = new fields.SchemaField({
+      wizard: new fields.NumberField({
+        ...requiredInteger,
+        initial: 3,
+        min: 0,
+        max: 7,
       }),
 
-      wild: new fields.SchemaField({
-        value: new fields.NumberField({
-          ...requiredInteger,
-          initial: 3,
-          min: 0,
-          max: 7,
-        }),
+      wild: new fields.NumberField({
+        ...requiredInteger,
+        initial: 3,
+        min: 0,
+        max: 7,
       }),
     });
-    
+
     schema.biography = new fields.HTMLField();
 
     return schema;

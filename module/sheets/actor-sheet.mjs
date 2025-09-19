@@ -1,3 +1,6 @@
+import { DEF_WIZ_Props1, DEF_WIZ_Props2, PropSlot } from "../helpers/PropTypes.mjs";
+import { DEF_WIZ_PlayerClasses } from "../helpers/PlayerClass.mjs";
+
 const { api, sheets } = foundry.applications;
 const { renderTemplate } = foundry.applications.handlebars;
 const TextEditor = foundry.applications.ux.TextEditor;
@@ -97,11 +100,9 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
       flags: this.actor.flags,
       // Adding a pointer to CONFIG.DEF_WIZ
       config: CONFIG.DEF_WIZ,
-      classes: CONFIG.DEF_WIZ.classes,
-      classNames: CONFIG.DEF_WIZ.classNames,
-      classDescriptions: CONFIG.DEF_WIZ.classDescriptions,
-      props1: CONFIG.DEF_WIZ.props1Names,
-      props2: CONFIG.DEF_WIZ.props2Names,
+      classes: DEF_WIZ_PlayerClasses,
+      props1: DEF_WIZ_Props1,
+      props2: DEF_WIZ_Props2,
       tabs: this._getTabs(options.parts),
       // Necessary for formInput and formFields helpers
       fields: this.document.schema.fields,
@@ -374,22 +375,22 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
     let currentStatValue = 0;
 
     if (isWizard) {
-      currentStatValue = this.actor.system.stats.wizard.value;
+      currentStatValue = this.actor.system.coreStats.wizard;
     } else {
-      currentStatValue = this.actor.system.stats.wild.value;
+      currentStatValue = this.actor.system.coreStats.wild;
     }
 
     const roll = new Roll(dataset.roll, this.actor.getRollData());
     await roll.evaluate();
 
     const isSuccess = roll.total <= currentStatValue;
-    
+
     console.log(roll);
 
     console.log(roll.terms[0].results);
 
     await roll.toMessage({
-      speaker: ChatMessage.getSpeaker({actor: this.actor})
+      speaker: ChatMessage.getSpeaker({ actor: this.actor })
     });
 
     let templateData = {
@@ -459,10 +460,9 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
     await roll.evaluate();
 
     const total = roll.total;
-    const classes = CONFIG.DEF_WIZ.classes;
-    const playerClass = classes[total];
+    const rolledClass = DEF_WIZ_PlayerClasses[total];
 
-    await this.actor.updateClass(playerClass);
+    await this.actor.updateClass(rolledClass.name);
   }
 
   static async _onClassChanged(event, target) {
@@ -480,12 +480,12 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
 
     switch (target.name) {
       case "prop1-roll":
-        let prop1 = CONFIG.DEF_WIZ.props1[total];
-        await this.actor.updateProp(1, prop1);
+        let prop1 = DEF_WIZ_Props1[total];
+        await this.actor.updateProp(PropSlot.PROP1, prop1.name);
         break;
       case "prop2-roll":
-        let prop2 = CONFIG.DEF_WIZ.props2[total];
-        await this.actor.updateProp(2, prop2);
+        let prop2 = DEF_WIZ_Props2[total];
+        await this.actor.updateProp(PropSlot.PROP2, prop2.name);
         break;
       default:
         break;
@@ -493,12 +493,15 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
   }
 
   static async _onPropChanged(event, target) {
+    console.log("prop changed");
+    console.log(event);
+    console.log(target);
     switch (target.name) {
       case "prop1-select":
-        await this.actor.updateProp(1, event.target.value);
+        await this.actor.updateProp(PropSlot.PROP1, event.target.value);
         break;
       case "prop2-select":
-        await this.actor.updateProp(2, event.target.value);
+        await this.actor.updateProp(PropSlot.PROP2, event.target.value);
         break;
       default:
         break;
