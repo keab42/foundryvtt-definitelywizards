@@ -1,0 +1,662 @@
+import {
+  DocumentSheetV2,
+  HandlebarsApplicationMixin,
+} from "fvtt-types/src/foundry/client/applications/api/_module.mjs";
+import DefWizActor from "../documents/actor";
+import { SystemTemplates } from "../helpers/system-templates";
+
+const { api, sheets } = foundry.applications;
+const { renderTemplate } = foundry.applications.handlebars;
+const TextEditor = foundry.applications.ux.TextEditor;
+
+/**
+ * Extend the basic ActorSheet with some very simple modifications
+ * @extends {ActorSheetV2}
+ */
+export class DefWizActorSheet extends api.HandlebarsApplicationMixin(sheets.ActorSheetV2) {
+  /** @override */
+  static DEFAULT_OPTIONS = {
+    classes: ["definitely-wizards", "actor"],
+    position: {
+      width: 600,
+      height: 600,
+    },
+    actions: {
+      onEditImage: this._onEditImage,
+      viewDoc: this._viewDoc,
+      createDoc: this._createDoc,
+      deleteDoc: this._deleteDoc,
+      rollStat: this._onRoll,
+      statPlus: this._increaseStat,
+      statMinus: this._decreaseStat,
+      statReset: this._resetStat,
+      rollForClass: this._rollForClass,
+      classSelect: this._onClassChanged,
+      rollForProp: this._rollForProp,
+      propSelect: this._onPropChanged,
+    },
+    // Custom property that's merged into `this.options`
+    dragDrop: [{ dragSelector: ".draggable", dropSelector: null }],
+    form: {
+      submitOnChange: true,
+    },
+    window: {
+      resizable: true,
+    },
+  };
+
+  /** @override */
+  static PARTS = {
+    header: {
+      template: "systems/def-wiz-2/templates/actor/header.hbs",
+    },
+    tabs: {
+      // Foundry-provided generic template
+      template: "templates/generic/tab-navigation.hbs",
+    },
+    class: {
+      template: "systems/def-wiz-2/templates/actor/class.hbs",
+      scrollable: [""],
+    },
+    biography: {
+      template: "systems/def-wiz-2/templates/actor/biography.hbs",
+      scrollable: [""],
+    },
+    gear: {
+      template: "systems/def-wiz-2/templates/actor/gear.hbs",
+      scrollable: [""],
+    },
+    spells: {
+      template: "systems/def-wiz-2/templates/actor/spells.hbs",
+      scrollable: [""],
+    },
+  };
+  static position: any;
+  static actor: any;
+
+  /** @override */
+  _configureRenderOptions(options: HandlebarsApplicationMixin.RenderOptions) {
+    super._configureRenderOptions(options);
+    // Not all parts always render
+    options.parts = ["header", "tabs", "class", "biography"];
+    // Don't show the other tabs if only limited view
+    if (this.document.limited) return;
+    // Control which parts show based on document subtype
+    options.parts.push("gear", "spells");
+  }
+
+  /* -------------------------------------------- */
+
+  /** @override */
+  async _prepareContext(options: HandlebarsApplicationMixin.RenderOptions) {
+    // Output initialization
+    const parentContext = await super._prepareContext(options);
+    const context: DefWizActorContext = {
+      ...parentContext,
+      // Validates both permissions and compendium status
+      editable: this.isEditable,
+      owner: this.document.isOwner,
+      limited: this.document.limited,
+      // Add the actor document.
+      actor: this.actor,
+      // Add the actor's data to context.data for easier access, as well as flags.
+      system: this.actor.system,
+      flags: this.actor.flags,
+      tabs: this._getTabs(options.parts),
+      // Necessary for formInput and formFields helpers
+      fields: this.document.schema.fields,
+      systemFields: this.document.system.schema.fields,
+      tab: "",
+      enrichedBiography: "",
+      gear: [],
+      features: [],
+      spells: []
+    };
+
+    // Offloading context prep to a helper function
+    this._prepareItems(context);
+
+    return context;
+  }
+
+  /** @override */
+  async _preparePartContext(partId: string, context: DefWizActorContext) {
+    switch (partId) {
+      case "class":
+        context.tab = context.tabs[partId];
+        break;
+      case "spells":
+      case "gear":
+        context.tab = context.tabs[partId];
+        break;
+      case "biography":
+        context.tab = context.tabs[partId];
+        // Enrich biography info for display
+        // Enrichment turns text like `[[/r 1d20]]` into buttons
+        context.enrichedBiography = await TextEditor.enrichHTML(
+          this.actor.system.biography,
+          {
+            // Whether to show secret blocks in the finished html
+            secrets: this.document.isOwner,
+            // Data to fill in for inline rolls
+            rollData: this.actor.getRollData(),
+            // Relative UUID resolution
+            relativeTo: this.actor,
+          }
+        );
+        break;
+    }
+    return context;
+  }
+
+  /**
+   * Generates the data for the generic tab navigation template
+   * @param {string[]} parts An array of named template parts to render
+   * @returns {Record<string, Partial<ApplicationTab>>}
+   * @protected
+   */
+  _getTabs(parts: string[]) {
+    // If you have sub-tabs this is necessary to change
+    const tabGroup = "primary";
+    // Default tab for first time it's rendered this session
+    if (!this.tabGroups[tabGroup]) this.tabGroups[tabGroup] = "class";
+    return parts.reduce((tabs, partId) => {
+      const tab: DefWizActorSheetTab = {
+        cssClass: "",
+        group: tabGroup,
+        id: "",
+        icon: "",
+        label: "",
+      };
+      switch (partId) {
+        case "header":
+        case "tabs":
+          return tabs;
+        case "class":
+          tab.id = "class";
+          tab.label += "class";
+          break;
+        case "biography":
+          tab.id = "biography";
+          tab.label += "Biography";
+          break;
+        case "gear":
+          tab.id = "gear";
+          tab.label += "Gear";
+          break;
+        case "spells":
+          tab.id = "spells";
+          tab.label += "Spells";
+          break;
+      }
+      if (this.tabGroups[tabGroup] === tab.id) tab.cssClass = "active";
+      tabs[partId] = tab;
+      return tabs;
+    }, {});
+  }
+
+  /**
+   * Organize and classify Items for Actor sheets.
+   *
+   * @param {object} context The context object to mutate
+   */
+  _prepareItems(context: DefWizActorContext) {
+    // Initialize containers.
+    // You can just use `this.document.itemTypes` instead
+    // if you don't need to subdivide a given type like
+    // this sheet does with spells
+    const gear = [];
+    const features = [];
+    const spells = [];
+
+    // Iterate through items, allocating to containers
+    for (let i of this.document.items) {
+      // Append to gear.
+      if (i.type === "gear") {
+        gear.push(i);
+      }
+      // Append to features.
+      else if (i.type === "feature") {
+        features.push(i);
+      }
+      // Append to spells.
+      else if (i.type === "spell") {
+        spells.push(i);
+      }
+    }
+
+    for (const s of Object.values(spells)) {
+      s.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+    }
+
+    // Sort then assign
+    context.gear = gear.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+    context.features = features.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+    context.spells = spells.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+  }
+
+  /**
+   * Actions performed after any render of the Application.
+   * Post-render steps are not awaited by the render process.
+   * @param {RenderContext} context      Prepared context data
+   * @param {RenderOptions} options                 Provided render options
+   * @protected
+   * @override
+   */
+  async _onRender(
+    context: HandlebarsApplicationMixin.RenderContext,
+    options: HandlebarsApplicationMixin.RenderOptions
+  ) {
+    await super._onRender(context, options);
+    this.#disableOverrides();
+    // You may want to add other special handling here
+    // Foundry comes with a large number of utility classes, e.g. SearchFilter
+    // That you may want to implement yourself.
+  }
+
+  /**************
+   *
+   *   ACTIONS
+   *
+   **************/
+
+  /**
+   * Handle changing a Document's image.
+   *
+   * @this DefWizActorSheet
+   * @param {PointerEvent} event   The originating click event
+   * @param {HTMLElement} target   The capturing HTML element which defined a [data-action]
+   * @returns {Promise}
+   * @protected
+   */
+  static async _onEditImage(event: PointerEvent, target: HTMLElement) {
+    const attr = target.dataset.edit;
+    const current = foundry.utils.getProperty(this.document, attr);
+    const { img } =
+      this.document.constructor.getDefaultArtwork?.(this.document.toObject()) ??
+      {};
+    const fp = new FilePicker({
+      current,
+      type: "image",
+      redirectToRoot: img ? [img] : [],
+      callback: (path) => {
+        this.document.update({ [attr]: path });
+      },
+      top: this.position.top + 40,
+      left: this.position.left + 10,
+    });
+    return fp.browse();
+  }
+
+  /**
+   * Renders an embedded document's sheet
+   *
+   * @this DefWizActorSheet
+   * @param {PointerEvent} event   The originating click event
+   * @param {HTMLElement} target   The capturing HTML element which defined a [data-action]
+   * @protected
+   */
+  static async _viewDoc(event: PointerEvent, target: HTMLElement) {
+    const doc = this._getEmbeddedDocument(target);
+    doc.sheet.render(true);
+  }
+
+  static _getEmbeddedDocument(target: HTMLElement) {
+    throw new Error("Method not implemented.");
+  }
+
+  /**
+   * Handles item deletion
+   *
+   * @this DefWizActorSheet
+   * @param {PointerEvent} event   The originating click event
+   * @param {HTMLElement} target   The capturing HTML element which defined a [data-action]
+   * @protected
+   */
+  static async _deleteDoc(event: PointerEvent, target: HTMLElement) {
+    const doc = this._getEmbeddedDocument(target);
+    await doc.delete();
+  }
+
+  /**
+   * Handle creating a new Owned Item or ActiveEffect for the actor using initial data defined in the HTML dataset
+   *
+   * @this DefWizActorSheet
+   * @param {PointerEvent} event   The originating click event
+   * @param {HTMLElement} target   The capturing HTML element which defined a [data-action]
+   * @private
+   */
+  static async _createDoc(event: PointerEvent, target: HTMLElement) {
+    // Retrieve the configured document class for Item or ActiveEffect
+    const docCls = getDocumentClass(target.dataset.documentClass);
+    // Prepare the document creation data by initializing it a default name.
+    const docData = {
+      name: docCls.defaultName({
+        // defaultName handles an undefined type gracefully
+        type: target.dataset.type,
+        parent: this.actor,
+      }),
+    };
+    // Loop through the dataset and add it to our docData
+    for (const [dataKey, value] of Object.entries(target.dataset)) {
+      // These data attributes are reserved for the action handling
+      if (["action", "documentClass"].includes(dataKey)) continue;
+      // Nested properties require dot notation in the HTML, e.g. anything with `system`
+      // An example exists in spells.hbs, with `data-system.spell-level`
+      // which turns into the dataKey 'system.spellLevel'
+      foundry.utils.setProperty(docData, dataKey, value);
+    }
+
+    // Finally, create the embedded document!
+    await docCls.create(docData, { parent: this.actor });
+  }
+
+  /**
+   * Handle clickable rolls.
+   *
+   * @this DefWizActorSheet
+   * @param {PointerEvent} event   The originating click event
+   * @param {HTMLElement} target   The capturing HTML element which defined a [data-action]
+   * @protected
+   */
+  static async _onRoll(event: PointerEvent, target: HTMLElement) {
+    event.preventDefault();
+
+    const dataset = target.dataset;
+    console.log(dataset);
+    const isWizard = dataset.stattype == "wizard";
+    const template = "systems/def-wiz-2/templates/chat/actor-skill-roll.hbs";
+
+    let currentStatValue = 0;
+
+    if (isWizard) {
+      currentStatValue = this.actor.system.stats.wizard.value;
+    } else {
+      currentStatValue = this.actor.system.stats.wild.value;
+    }
+
+    const roll = new Roll(dataset.roll, this.actor.getRollData());
+    await roll.evaluate();
+
+    const isSuccess = roll.total <= currentStatValue;
+
+    console.log(roll);
+
+    console.log(roll.terms[0].results);
+
+    await roll.toMessage({
+      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+    });
+
+    let templateData = {
+      isWizardRoll: isWizard,
+      isSuccess: isSuccess,
+      diceFormula: roll.formula,
+      diceTotal: roll.total,
+      owner: this.actor.id,
+    };
+
+    const rollMessage = {
+      user: game.user.id,
+      speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+      content: await renderTemplate(template, templateData),
+      rolls: roll,
+      sound: CONFIG.sounds.dice,
+    };
+
+    await ChatMessage.create(rollMessage);
+
+    if (isSuccess && isWizard) {
+      this.actor.updateStat(dataset.stattype, 1);
+    }
+
+    return roll;
+  }
+
+  /**Handle + button pressed
+   * @this DefWizActorSheet
+   * @param {PointerEvent} event   The originating click event
+   * @param {HTMLElement} target   The capturing HTML element which defined a [data-action]
+   */
+  static async _increaseStat(event: PointerEvent, target: HTMLElement) {
+    event.preventDefault();
+    const rollType = this._getStatType(target);
+    this.actor.updateStat(rollType, 1);
+  }
+  static _getStatType(target: HTMLElement) {
+    throw new Error("Method not implemented.");
+  }
+
+  /**Handle - button pressed
+   * @this DefWizActorSheet
+   * @param {PointerEvent} event   The originating click event
+   * @param {HTMLElement} target   The capturing HTML element which defined a [data-action]
+   */
+  static async _decreaseStat(event: PointerEvent, target: HTMLElement) {
+    event.preventDefault();
+    const rollType = this._getStatType(target);
+    this.actor.updateStat(rollType, -1);
+  }
+
+  /**Handle reset button pressed
+   * @this DefWizActorSheet
+   * @param {PointerEvent} event   The originating click event
+   * @param {HTMLElement} target   The capturing HTML element which defined a [data-action]
+   */
+  static async _resetStat(event: PointerEvent, target: HTMLElement) {
+    event.preventDefault();
+    const rollType = this._getStatType(target);
+    this.actor.resetStat(rollType);
+  }
+
+  static async _rollForClass(event: PointerEvent, target: HTMLElement) {
+    event.preventDefault();
+    const dataset = target.dataset;
+
+    const roll = new Roll(dataset.roll, this.actor.getRollData());
+    await roll.evaluate();
+
+    const total = roll.total;
+    const classes = CONFIG.DEF_WIZ.classes;
+    const playerClass = classes[total];
+
+    await this.actor.updateClass(playerClass);
+  }
+
+  static async _onClassChanged(event: PointerEvent, target: HTMLElement) {
+    this.actor.updateClass(event.target.value);
+  }
+
+  static async _rollForProp(event, target) {
+    event.preventDefault();
+    const dataset = target.dataset;
+
+    const roll = new Roll(dataset.roll, this.actor.getRollData());
+    await roll.evaluate();
+
+    const total = roll.total;
+
+    switch (target.name) {
+      case "prop1-roll":
+        let prop1 = CONFIG.DEF_WIZ.props1[total];
+        await this.actor.updateProp(1, prop1);
+        break;
+      case "prop2-roll":
+        let prop2 = CONFIG.DEF_WIZ.props2[total];
+        await this.actor.updateProp(2, prop2);
+        break;
+      default:
+        break;
+    }
+  }
+
+  static async _onPropChanged(event: PointerEvent, target: HTMLElement) {
+    switch (target.name) {
+      case "prop1-select":
+        await this.actor.updateProp(1, event.target.value);
+        break;
+      case "prop2-select":
+        await this.actor.updateProp(2, event.target.value);
+        break;
+      default:
+        break;
+    }
+  }
+
+  /** Helper Functions */
+
+  /**
+   * Fetches the embedded document representing the containing HTML element
+   *
+   * @param {HTMLElement} target    The element subject to search
+   * @returns {Item | ActiveEffect} The embedded Item or ActiveEffect
+   */
+  _getEmbeddedDocument(target: HTMLElement) : any {
+    const docRow = target.closest("li[data-document-class]");
+    if (docRow.dataset.documentClass === "Item") {
+      return this.actor.items.get(docRow.dataset.itemId);
+    } else if (docRow.dataset.documentClass === "ActiveEffect") {
+      const parent =
+        docRow.dataset.parentId === this.actor.id
+          ? this.actor
+          : this.actor.items.get(docRow?.dataset.parentId);
+    } else return console.warn("Could not find document class");
+  }
+
+  /** Works out whether you clicked a button for Wizard or Wild
+   * @param {HTMLElement} target    The element subject to search
+   * @returns {String} a string for the result type
+   */
+  _getStatType(element: HTMLElement) {
+    const parentID = element.parentElement?.id;
+    if (parentID === "stat-wizard") {
+      return "wizard";
+    } else if (parentID === "stat-wild") {
+      return "wild";
+    } else {
+      return undefined;
+    }
+  }
+
+  /***************
+   *
+   * Drag and Drop
+   *
+   ***************/
+
+  /**
+   * Handle dropping of an Actor data onto another Actor sheet
+   * @param {DragEvent} event            The concluding DragEvent which contains drop data
+   * @param {object} data                The data transfer extracted from the event
+   * @returns {Promise<object|boolean>}  A data object which describes the result of the drop, or false if the drop was
+   *                                     not permitted.
+   * @protected
+   */
+  async _onDropActor(event: DragEvent, data: object) {
+    if (!this.actor.isOwner) return false;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Handle dropping of a Folder on an Actor Sheet.
+   * The core sheet currently supports dropping a Folder of Items to create all items as owned items.
+   * @param {DragEvent} event     The concluding DragEvent which contains drop data
+   * @param {object} data         The data transfer extracted from the event
+   * @returns {Promise<Item[]>}
+   * @protected
+   */
+  async _onDropFolder(event: DragEvent, data: object) {
+    if (!this.actor.isOwner) return [];
+    const folder = await Folder.implementation.fromDropData(data);
+    if (folder.type !== "Item") return [];
+    const droppedItemData = await Promise.all(
+      folder.contents.map(async (item) => {
+        if (!(document instanceof Item)) item = await fromUuid(item.uuid);
+        return item;
+      })
+    );
+    return this._onDropItemCreate(droppedItemData, event);
+  }
+
+  /**
+   * Handle the final creation of dropped Item data on the Actor.
+   * This method is factored out to allow downstream classes the opportunity to override item creation behavior.
+   * @param {object[]|object} itemData      The item data requested for creation
+   * @param {DragEvent} event               The concluding DragEvent which provided the drop data
+   * @returns {Promise<Item[]>}
+   * @private
+   */
+  async _onDropItemCreate(itemData: object[] | object, event: DragEvent) {
+    itemData = itemData instanceof Array ? itemData : [itemData];
+    return this.actor.createEmbeddedDocuments("Item", itemData);
+  }
+
+  /********************
+   *
+   * Actor Override Handling
+   *
+   ********************/
+
+  /**
+   * Submit a document update based on the processed form data.
+   * @param {SubmitEvent} event                   The originating form submission event
+   * @param {HTMLFormElement} form                The form element that was submitted
+   * @param {object} submitData                   Processed and validated form data to be used for a document update
+   * @returns {Promise<void>}
+   * @protected
+   * @override
+   */
+  async _processSubmitData(
+    event: SubmitEvent,
+    form: HTMLFormElement,
+    submitData: object
+  ) {
+    const overrides = foundry.utils.flattenObject(this.actor.overrides);
+    for (let k of Object.keys(overrides)) delete submitData[k];
+    await this.document.update(submitData);
+  }
+
+  /**
+   * Disables inputs subject to active effects
+   */
+  #disableOverrides() {
+    const flatOverrides = foundry.utils.flattenObject(this.actor.overrides);
+    for (const override of Object.keys(flatOverrides)) {
+      const input = this.element.querySelector(`[name="${override}"]`);
+      if (input) {
+        input.disabled = true;
+      }
+    }
+  }
+}
+
+export interface DefWizActorContext
+  extends HandlebarsApplicationMixin.RenderContext {
+  // Required properties from RenderContext<Actor.Implementation>
+  document: Actor;
+  source: any;
+  rootId: string;
+  editable: boolean;
+  owner: boolean;
+  limited: boolean;
+  actor: DefWizActor;
+  system: SystemTemplates.PlayerCharacter;
+  flags: Record<string, unknown>;
+  //tabs: Record<string, DefWizActorSheetTab>;
+  fields: Record<string, unknown>;
+  systemFields: Record<string, unknown>;
+  tab: string;
+  enrichedBiography: string;
+  gear: Item[];
+  features: Item[];
+  spells: Item[];
+}
+
+export type DefWizActorSheetTab = {
+  cssClass: string;
+  group: string;
+  id: string;
+  icon: string;
+  label: string;
+};
