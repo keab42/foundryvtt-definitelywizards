@@ -48,14 +48,9 @@ Hooks.once('init', function () {
   };
   CONFIG.Item.documentClass = DefWizItem;
   CONFIG.Item.dataModels = {
-    gear: models.DefWizGear,
+    prop: models.DefWizProp,
     spell: models.DefWizSpell,
   };
-
-  // Active Effects are never copied to the Actor,
-  // but will still apply to the Actor from within the Item
-  // if the transfer property on the Active Effect is true.
-  CONFIG.ActiveEffect.legacyTransferral = false;
 
   // Register sheet application classes
   collections.Actors.unregisterSheet('core', sheets.ActorSheet);

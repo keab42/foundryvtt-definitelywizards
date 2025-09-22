@@ -1,6 +1,6 @@
 import DefWizItemBase from './base-item.mjs';
 
-export default class DefWizGear extends DefWizItemBase {
+export default class DefWizProp extends DefWizItemBase {
   static LOCALIZATION_PREFIXES = [
     'DEF_WIZ.Item.base',
     'DEF_WIZ.Item.Gear',

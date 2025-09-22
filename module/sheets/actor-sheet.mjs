@@ -165,7 +165,7 @@ export class DefWizActorSheet extends api.HandlebarsApplicationMixin(
         // FontAwesome Icon, if you so choose
         icon: "",
         // Run through localization
-        label: "DEF_WIZ.Actor.Tabs.",
+        label: "DEF_WIZ.Actor.Tabs.Class",
       };
       switch (partId) {
         case "header":

@@ -39,20 +39,20 @@ export class DefWizActor extends Actor {
   async updateStat(statType, offset) {
     var oldValue = 0;
     var newValue = 0;
-    var localizedChatLabel = "";
+    var chatLabel = "";
     var updateData = {};
 
     switch (statType) {
       case "wizard":
         oldValue = this.system.coreStats.wizard;
         newValue = oldValue + offset;
-        localizedChatLabel = game.i18n.localize("DW.Wizard");
+        chatLabel = "DW.Wizard";
         updateData = { "system.coreStats.wizard": newValue };
         break;
       case "wild":
         oldValue = this.system.coreStats.wild;
         newValue = oldValue + offset;
-        localizedChatLabel = game.i18n.localize("DW.Wild");
+        chatLabel = "DW.Wild";
         updateData = { "system.coreStats.wild": newValue };
         break;
       default:
@@ -60,28 +60,35 @@ export class DefWizActor extends Actor {
     }
 
     await this.update(updateData);
-    await this._postStatUpdateToChat(localizedChatLabel, oldValue, newValue);
+    await this._postStatUpdateToChat(chatLabel, oldValue, newValue);
 
     checkGameState(this);
   }
 
   async resetStat(statType) {
+    var oldValue = 0;
+    const newValue = 2;
+    var chatLabel = "";
+    var updateData = {};
+
+
     switch (statType) {
       case "wizard":
-        const wizardStat = this.system.coreStats.wizard;
-        const newWizardValue = 2;
-        await this.update({ "system.coreStats.wizard": newWizardValue });
-        await this._postStatUpdateToChat(game.i18n.localize("DW.Wizard"), wizardStat, newWizardValue);
+        oldValue = this.system.coreStats.wizard;
+        updateData = { "system.coreStats.wizard": newValue };
+        chatLabel = "DW.Wizard";
         break;
       case "wild":
-        const wildStat = this.system.coreStats.wild;
-        const newWildValue = 2;
-        await this.update({ "system.coreStats.wild": newWildValue });
-        await this._postStatUpdateToChat(game.i18n.localize("DW.Wild"), wildStat, newWildValue);
+        oldValue = this.system.coreStats.wild;
+        updateData = { "system.coreStats.wild": newValue };
+        chatLabel = "DW.Wild";
         break;
       default:
         break;
     }
+
+    await this.update(updateData);
+    await this._postStatUpdateToChat(chatLabel, oldValue, newValue);
   }
 
   async _postStatUpdateToChat(statType, oldValue, newValue) {
@@ -148,10 +155,6 @@ export class DefWizActor extends Actor {
   async updateProp(propSlot, propKey) {
     let updateData = {};
 
-    console.log("updating prop");
-    console.log(propSlot);
-    console.log(propKey);
-
     let customProp = "";
     if (propKey == "custom") {
       customProp = game.i18n.localize("DW.CustomProp");
@@ -182,8 +185,6 @@ export class DefWizActor extends Actor {
       default:
         break;
     }
-
-    console.log(updateData);
 
     await this.update(updateData)
     await this._postPropUpdateToChat(propSlot, propKey);
