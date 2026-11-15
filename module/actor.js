@@ -1,37 +1,17 @@
 /**
- * Extend the base Actor entity by defining a custom roll data structure which is ideal for the HoneyHeist system.
- * @extends {Actor}
+ * Extend the base Actor document for the Definitely Wizards system.
  */
-
 export class DefinitelyWizardsActor extends Actor {
-    /** @override */
-    // getRollData() {
-    //  const data = super.getRollData();
-    //  return data;
-    // }
-    // /** @override */
-    // prepareData() {
-    //  super.prepareData();
-    //  const actorData = this.data;
-    // }
-
-
+    /**
+     * Adjust either the Wizard or Wild stat by an offset.
+     * @param {boolean} isWizard
+     * @param {number} offset
+     */
     async updateStat(isWizard, offset) {
-
-        let wizardStat = this.system.stats.wizard;
-        let wildStat = this.system.stats.wild;
+        let wizardStat = Number(this.system.stats.wizard);
+        let wildStat = Number(this.system.stats.wild);
         let oldValue = 0;
         let newValue = 0;
-
-        // These stat values should always be numbers, but sometimes
-        // they get returned as strings and I don't know why.
-        if (typeof wizardStat === "string") {
-            wizardStat = parseInt(wizardStat);
-        }
-
-        if (typeof wildStat === "string") {
-            wildStat = parseInt(wildStat);
-        }
 
         if (isWizard) {
             oldValue = wizardStat;
@@ -43,38 +23,33 @@ export class DefinitelyWizardsActor extends Actor {
             newValue = wildStat;
         }
 
-        if (wildStat >= 0 && wildStat <= 7) {
-            // Set the new values in the sheet.
-            await this.update({ "system.stats.wizard": wizardStat });
-            await this.update({ "system.stats.wild": wildStat });
+        if (newValue >= 0 && newValue <= 7) {
+            await this.update({
+                "system.stats.wizard": wizardStat,
+                "system.stats.wild": wildStat,
+            });
 
             await this._postUpdateToChat(isWizard, oldValue, newValue);
 
-            // Check to see if either the bear or criminal stat has reached 6,
-            // which means it's the end for this bear.
-            if (wildStat >= 7) {
-                ChatMessage.create({
-                    user: game.user.id,  // avoid deprecation warning, backwards compatible
+            if (!isWizard && wildStat >= 7) {
+                await ChatMessage.create({
+                    user: game.user.id,
                     speaker: ChatMessage.getSpeaker({ actor: this }),
-                    content: game.i18n.localize("DW.EndGame")
+                    content: game.i18n.localize("DW.EndGame"),
                 });
             }
         }
     }
 
+    /**
+     * Reset either the Wizard or Wild stat back to 2.
+     * @param {boolean} isWizard
+     */
     async resetStat(isWizard) {
-        let wizardStat = this.system.stats.wizard;
-        let wildStat = this.system.stats.wild;
+        let wizardStat = Number(this.system.stats.wizard);
+        let wildStat = Number(this.system.stats.wild);
         let oldValue = 0;
         let newValue = 0;
-
-        if (typeof wizardStat === "string") {
-            wizardStat = parseInt(wizardStat);
-        }
-
-        if (typeof wildStat === "string") {
-            wildStat = parseInt(wildStat);
-        }
 
         if (isWizard) {
             oldValue = wizardStat;
@@ -86,27 +61,34 @@ export class DefinitelyWizardsActor extends Actor {
             newValue = wildStat;
         }
 
-        await this.update({ "system.stats.wizard": wizardStat });
-        await this.update({ "system.stats.wild": wildStat });
+        await this.update({
+            "system.stats.wizard": wizardStat,
+            "system.stats.wild": wildStat,
+        });
 
         await this._postUpdateToChat(isWizard, oldValue, newValue);
     }
 
+    /**
+     * Post a stat change card to the chat log.
+     * @param {boolean} isWizard
+     * @param {number} oldValue
+     * @param {number} newValue
+     */
     async _postUpdateToChat(isWizard, oldValue, newValue) {
         const template = "systems/definitely-wizards/templates/chat/actor-stat-update-chat.hbs";
-
-        let templateData = {
+        const templateData = {
             isWizardRoll: isWizard,
-            oldValue: oldValue,
-            newValue: newValue,
-            owner: this.id
+            oldValue,
+            newValue,
+            owner: this.id,
         };
 
-        ChatMessage.create({
+        await ChatMessage.create({
             user: game.user.id,
-            speaker: ChatMessage.getSpeaker({actor: this}),
-            content: await renderTemplate(template, templateData),
-            style: CONST.CHAT_MESSAGE_STYLES.OOC
+            speaker: ChatMessage.getSpeaker({ actor: this }),
+            content: await foundry.applications.handlebars.renderTemplate(template, templateData),
+            style: CONST.CHAT_MESSAGE_STYLES.OOC,
         });
     }
 }

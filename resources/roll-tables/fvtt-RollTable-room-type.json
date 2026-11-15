@@ -5,93 +5,75 @@
   "description": "Roll for all chambers.",
   "results": [
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        1,
-        1
-      ],
+      "range": [1, 1],
       "drawn": false,
-      "documentCollection": "",
       "_id": "JWc8tICHS5ZqhxaF",
-      "text": "A typical dungeon with crates and weapons lying around and at least one skeleton",
+      "name": "A typical dungeon with crates and weapons lying around and at least one skeleton",
+      "description": "<p>A typical dungeon with crates and weapons lying around and at least one skeleton</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        2,
-        2
-      ],
+      "range": [2, 2],
       "drawn": false,
-      "documentCollection": "",
       "_id": "9APVWPKBoAhVXNni",
-      "text": "A lavish study with suits of armor, paintings, mirrors, etc.",
+      "name": "A lavish study with suits of armor, paintings, mirrors, etc.",
+      "description": "<p>A lavish study with suits of armor, paintings, mirrors, etc.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        3,
-        3
-      ],
+      "range": [3, 3],
       "drawn": false,
-      "documentCollection": "",
       "_id": "ysjBwmvPlwRDnyrI",
-      "text": "What appears to be an outdoor scene, but is actually a combination of illusion and real set pieces contained within a large room",
+      "name": "What appears to be an outdoor scene, but is actually a combination of illusion and real set pieces contained within a large room",
+      "description": "<p>What appears to be an outdoor scene, but is actually a combination of illusion and real set pieces contained within a large room</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        4,
-        4
-      ],
+      "range": [4, 4],
       "drawn": false,
-      "documentCollection": "",
       "_id": "HNDH7B46YmCRbksw",
-      "text": "A kitchen for a large manor, complete with wood-burning ovens and a large pantry",
+      "name": "A kitchen for a large manor, complete with wood-burning ovens and a large pantry",
+      "description": "<p>A kitchen for a large manor, complete with wood-burning ovens and a large pantry</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        5,
-        5
-      ],
+      "range": [5, 5],
       "drawn": false,
-      "documentCollection": "",
       "_id": "MoOt0rwplBVgRFEF",
-      "text": "A natural cavern with no clear exit and several branching tunnels",
+      "name": "A natural cavern with no clear exit and several branching tunnels",
+      "description": "<p>A natural cavern with no clear exit and several branching tunnels</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        6,
-        6
-      ],
+      "range": [6, 6],
       "drawn": false,
-      "documentCollection": "",
       "_id": "NdLo9rkKQzzhIYKf",
-      "text": "A room set up like a life-size chess board or other board game",
+      "name": "A room set up like a life-size chess board or other board game",
+      "description": "<p>A room set up like a life-size chess board or other board game</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     }
   ],
@@ -108,8 +90,8 @@
   },
   "_stats": {
     "systemId": "definitely-wizards",
-    "systemVersion": "1",
-    "coreVersion": "10.291",
+    "systemVersion": "1.5.0",
+    "coreVersion": "14",
     "createdTime": 1675446288683,
     "modifiedTime": 1675446346267,
     "lastModifiedBy": "7tb3mKRi81OTM7ij"

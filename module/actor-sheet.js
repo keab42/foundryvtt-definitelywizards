@@ -1,305 +1,348 @@
+const { HandlebarsApplicationMixin } = foundry.applications.api;
+const { ActorSheetV2 } = foundry.applications.sheets;
+
+const itemItemType = "MiscItem";
+const propItemType = "Prop";
+const spellItemType = "Spell";
+
 /**
- * Extend the basic ActorSheet
- * @extends {ActorSheet}
+ * Character sheet for the Definitely Wizards system using ApplicationV2.
  */
-
- const itemItemType = "MiscItem";
- const propItemType = "Prop";
- const spellItemType = "Spell";
-
-export class DefinitelyWizardsActorSheet extends ActorSheet {
-    /** @override */
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            classes: ["definitelywizards", "sheet", "actor"],
-            template: "systems/definitely-wizards/templates/actor-sheet.html",
+export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
+    static DEFAULT_OPTIONS = {
+        classes: ["definitelywizards", "sheet", "actor", "theme-light"],
+        position: {
             width: 750,
             height: 625,
-            scrollY: [ "dw-item-list", "dw-spell-list", "dw-prop-list" ],
-            tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "features" }],
-            dragDrop: [{ dropSelector: null, dragSelector: '[draggable]' }],
-            resizable: false
-        });
-    }
+        },
+        window: {
+            resizable: false,
+        },
+        form: {
+            submitOnChange: true,
+            closeOnSubmit: false,
+        },
+        actions: {
+            statPlus: DefinitelyWizardsActorSheet._onStatPlus,
+            statMinus: DefinitelyWizardsActorSheet._onStatMinus,
+            statReset: DefinitelyWizardsActorSheet._onStatReset,
+            statRoll: DefinitelyWizardsActorSheet._onStatRoll,
+            attributeRoll: DefinitelyWizardsActorSheet._onAttributeRoll,
+            addItem: DefinitelyWizardsActorSheet._onAddItem,
+            editItem: DefinitelyWizardsActorSheet._onEditItem,
+            deleteItem: DefinitelyWizardsActorSheet._onDeleteItem,
+            rollItem: DefinitelyWizardsActorSheet._onRollItem,
+        },
+    };
+
+    static PARTS = {
+        form: {
+            template: "systems/definitely-wizards/templates/actor-sheet.html",
+            scrollable: [".dw-prop-list", ".dw-item-list", ".dw-spell-list"],
+        },
+    };
+
+    static TABS = {
+        primary: {
+            tabs: [
+                { id: "attributes", label: "DW.AttributesTitle" },
+                { id: "bio", label: "DW.BiographyTitle" },
+                { id: "items", label: "DW.ItemsTitle" },
+                { id: "spells", label: "DW.SpellsTitle" },
+            ],
+            initial: "attributes",
+        },
+    };
 
     /** @override */
-    getData(options) {
-        let baseData = super.getData(options);
-        let sheetData = {};
-        sheetData = baseData.data;  // needed to handle the new 0.8.x data depth
-        sheetData.actor = this.actor.toObject(false);  // needed for actor.x handlebars
-        sheetData.editable = this.options.editable;  // needed to fix TinyMCE due to missing editable parameter
+    async _prepareContext(options) {
+        const context = await super._prepareContext(options);
+        const source = this.actor.toObject();
+        const { TextEditor } = foundry.applications.ux;
 
-        this._prepareCharacterItems(sheetData);
+        context.actor = this.actor;
+        context.system = this.actor.system;
+        context.source = source;
+        context.editable = this.isEditable;
+        context.owner = this.actor.isOwner;
+        context.config = CONFIG.DEFINITELY_WIZARDS;
+        context.tabs = this._prepareTabs("primary");
 
-        return sheetData;
+        context.isWizardHigh = Number(this.actor.system.stats.wizard) >= 6;
+        context.isWildHigh = Number(this.actor.system.stats.wild) >= 6;
+        context.showCustomClass = this.actor.system.playerClass === "custom";
+        context.showClassDescription =
+            Boolean(this.actor.system.playerClass) && this.actor.system.playerClass !== "none";
+        context.showCustomProp1 = this.actor.system.prop1 === "custom";
+        context.showCustomProp2 = this.actor.system.prop2 === "custom";
+
+        context.enrichedBiography = await TextEditor.implementation.enrichHTML(
+            this.actor.system.biography ?? "",
+            {
+                secrets: this.actor.isOwner,
+                rollData: () => this.actor.getRollData(),
+                relativeTo: this.actor,
+            },
+        );
+
+        context.enrichedClassDescription = await TextEditor.implementation.enrichHTML(
+            this.actor.system.classDescription ?? "",
+            {
+                secrets: this.actor.isOwner,
+                rollData: () => this.actor.getRollData(),
+                relativeTo: this.actor,
+            },
+        );
+
+        this._prepareCharacterItems(context);
+
+        return context;
     }
 
-    /** @override */
-    activateListeners(html) {
-        super.activateListeners(html);
-
-        html.find(".attribute-select").change(this._onAttributeChanged.bind(this));
-
-        html.find(".prop-select").change(this._onPropChanged.bind(this));
-
-        html.find(".attribute-roll").click(this._onAttributeRoll.bind(this));
-
-        html.find(".stat-button-plus").click((ev) => {
-            const isWizardRoll = this._isWizardRoll(ev.currentTarget);
-            this.actor.updateStat(isWizardRoll, 1);
-        });
-
-        html.find(".stat-button-minus").click((ev) => {
-            const isWizardRoll = this._isWizardRoll(ev.currentTarget);
-            this.actor.updateStat(isWizardRoll, -1);
-        });
-
-        html.find(".stat-button-reset").click((ev) => {
-            const isWizardRoll = this._isWizardRoll(ev.currentTarget);
-            this.actor.resetStat(isWizardRoll);
-        });
-
-        html.find(".stat-roll-single, .stat-roll-double").click(async (ev) => {
-            const template = "systems/definitely-wizards/templates/chat/skill-roll-chat.hbs";
-            const isWizardRoll = this._isWizardRoll(ev.currentTarget);
-            const roller = $(ev.currentTarget);
-            const input = roller.siblings(".stat-value").get(0);
-            const currentValue = parseInt(input.value);
-            
-            const roll = new Roll(roller.data("roll"), this.actor.getRollData());
-            await roll.evaluate();
-            
-            const isSuccess = roll.total <= currentValue;
-            const rollSuccess = isSuccess ? game.i18n.localize("DW.Success") : game.i18n.localize("DW.Failed");
-
-            let templateData = {
-                isWizardRoll: isWizardRoll,
-                isSuccess: isSuccess,
-                diceFormula: roll.formula,
-                diceTotal: roll.total,
-                owner: this.actor.id
-            };
-
-            if (isSuccess && isWizardRoll) {
-                this.actor.updateStat(isWizardRoll, 1);
-            }
-
-            const rollMessage = {
-                user: game.user.id,
-                speaker: ChatMessage.getSpeaker({actor: this.actor}),
-                content: await renderTemplate(template, templateData),
-                rolls: roll,
-                sound: CONFIG.sounds.dice
-            };
-
-            await ChatMessage.create(rollMessage);
-
-        });
-
-        html.find(".add-item, .add-prop, .add-spell").click(this._addItem.bind(this));
-
-        html.find(".item-edit, .prop-edit, .spell-edit").click(this._editItem.bind(this));
-
-        html.find(".item-delete, .prop-delete, .spell-delete").click(this._deleteItem.bind(this));
-
-        html.find(".item-roll, .prop-roll, .spell-roll").click(this._rollItem.bind(this));
-    }
-
-    _prepareCharacterItems(sheetData) {
-        const actorData = sheetData.actor;
-
+    /**
+     * Partition embedded Items into props, miscItems, and spells.
+     * @param {Record<string, any>} context
+     */
+    _prepareCharacterItems(context) {
         const miscItems = [];
         const props = [];
         const spells = [];
 
-        for (let i of sheetData.items) {
-            let item = i.datal
-            i.img = i.img || DEFAULT_TOKEN;
+        for (const itemDoc of this.actor.items.contents) {
+            const item = itemDoc.toObject(false);
+            item.img = item.img || Item.DEFAULT_ICON;
 
-            if (i.type === itemItemType){
-                miscItems.push(i);
-            } else if (i.type === propItemType) {
-                props.push(i);
-            } else if (i.type === spellItemType) {
-                spells.push(i);
+            if (item.type === itemItemType) {
+                miscItems.push(item);
+            } else if (item.type === propItemType) {
+                props.push(item);
+            } else if (item.type === spellItemType) {
+                spells.push(item);
             }
         }
 
-        actorData.miscItems = miscItems;
-        actorData.props = props;
-        actorData.spells = spells;
+        context.miscItems = miscItems;
+        context.props = props;
+        context.spells = spells;
     }
 
-    async _addItem(event) {
-        let classes = event.target.classList;
-        var itemType = "";
-
-        if (classes.contains("add-item")) {
-            itemType = itemItemType;
-        } else if (classes.contains("add-prop")) {
-            itemType = propItemType;
-        } else if (classes.contains("add-spell")) {
-            itemType = spellItemType;
+    /** @override */
+    _prepareSubmitData(event, form, formData, updateData) {
+        const submitData = super._prepareSubmitData(event, form, formData, updateData);
+        const newClass = submitData?.system?.playerClass;
+        if (newClass !== undefined && newClass !== this.actor.system.playerClass) {
+            const classDescKey = CONFIG.DEFINITELY_WIZARDS?.playerClasses?.[newClass]?.description;
+            submitData.system.classDescription = classDescKey
+                ? game.i18n.localize(classDescKey)
+                : "";
         }
-
-        if (itemType.length > 0) {
-            let item = await this.actor.createEmbeddedDocuments("Item", [{type: itemType, name: game.i18n.localize('DW.NewItemName')}]);
-            await item[0].sheet.render(true);
-        }
+        return submitData;
     }
 
-    async _editItem(event) {
-        const itemID = $(event.currentTarget).parents("[data-item-id]")[0].dataset.itemId;
-        const item = this.actor.items.get(itemID);
-        if (item) { item.sheet.render(true); }
+    /**
+     * Determine whether an action target belongs to the Wizard stat block.
+     * @param {HTMLElement} target
+     * @returns {boolean}
+     */
+    static _isWizardTarget(target) {
+        return Boolean(target.closest("#stat-wizard"));
     }
 
-    async _deleteItem(event) {
-        const itemID = $(event.currentTarget).parents("[data-item-id]")[0].dataset.itemId;
-        const item = this.actor.items.get(itemID);
-
-        new Dialog({
-            title: `${game.i18n.localize("DW.ConfirmItemDelete")}: ${item.name}`,
-            content: game.i18n.localize("DW.ConfirmItemDeleteText"),
-            buttons: {
-                yes: {
-                    icon: "<i class='fas fa-check'></i>",
-                    label: game.i18n.localize("Yes"),
-                    callback: async (html) => {
-                        await item.delete();
-                    }
-                },
-                no: {
-                    icon: "<i class='fas fa-times'></i>",
-                    label: game.i18n.localize("No")
-                }
-            },
-            default: "no"
-        }).render(true);
+    /**
+     * @this {DefinitelyWizardsActorSheet}
+     * @param {PointerEvent} _event
+     * @param {HTMLElement} target
+     */
+    static async _onStatPlus(_event, target) {
+        const isWizardRoll = DefinitelyWizardsActorSheet._isWizardTarget(target);
+        await this.actor.updateStat?.(isWizardRoll, 1);
     }
 
-    async _rollItem(event) {
-        const itemID = $(event.currentTarget).parents("[data-item-id]")[0].dataset.itemId;
-        const item = this.actor.items.get(itemID);
-        const messageData = {
-            speaker: ChatMessage.getSpeaker({actor: this.actor}),
-            content: `
-                <div class="definitelywizards">
-                    <div class="chatItem flexrow">
-                        <div class="item-image" tabindex="0" aria-label="${item.name}" style="background-image: url('${item.img}')"></div>
-                        <h4>${item.name}</h4>
-                    </div>
-                </div>
-                <div>${item.getRollData().description}</div>`
-        }
-
-        await ChatMessage.create(messageData);
+    /**
+     * @this {DefinitelyWizardsActorSheet}
+     * @param {PointerEvent} _event
+     * @param {HTMLElement} target
+     */
+    static async _onStatMinus(_event, target) {
+        const isWizardRoll = DefinitelyWizardsActorSheet._isWizardTarget(target);
+        await this.actor.updateStat?.(isWizardRoll, -1);
     }
 
-    _isWizardRoll(element) {
-        return element.parentElement.id === "stat-wizard";
+    /**
+     * @this {DefinitelyWizardsActorSheet}
+     * @param {PointerEvent} _event
+     * @param {HTMLElement} target
+     */
+    static async _onStatReset(_event, target) {
+        const isWizardRoll = DefinitelyWizardsActorSheet._isWizardTarget(target);
+        await this.actor.resetStat?.(isWizardRoll);
     }
 
-    async _onPropChanged(event) {
-        // TODO: - Decide if you want to auto add props or not
-    }
+    /**
+     * @this {DefinitelyWizardsActorSheet}
+     * @param {PointerEvent} _event
+     * @param {HTMLElement} target
+     */
+    static async _onStatRoll(_event, target) {
+        const template = "systems/definitely-wizards/templates/chat/skill-roll-chat.hbs";
+        const isWizardRoll = DefinitelyWizardsActorSheet._isWizardTarget(target);
+        const currentValue = isWizardRoll
+            ? Number(this.actor.system.stats.wizard)
+            : Number(this.actor.system.stats.wild);
 
-    async _onAttributeRoll(event) {
-        const roller = $(event.currentTarget);
-
-        const roll = new Roll(roller.data("roll"), this.actor.getRollData());
+        const formula = target.dataset.roll ?? "1d6";
+        const roll = new Roll(formula, this.actor.getRollData());
         await roll.evaluate();
 
-        const parent = roller.parent("div");
-        const label = parent.find("label").get(0).innerText;
-        const select = parent.find("select").get(0);
-        const attributeName = select.name;
-        const option = select.options[roll.total];
+        const isSuccess = roll.total <= currentValue;
+        const templateData = {
+            isWizardRoll,
+            isSuccess,
+            diceFormula: roll.formula,
+            diceTotal: roll.total,
+            owner: this.actor.id,
+        };
 
-        await this.actor.update({ [attributeName]: option.value });
-
-        if(attributeName === "system.player-class") {
-            if(roll.total === 11) {
-                $(".customClass").show();
-            }
-
-            await this.updateClass(option.value);
+        if (isSuccess && isWizardRoll) {
+            await this.actor.updateStat?.(isWizardRoll, 1);
         }
 
         const rollMessage = {
-            user: game.user.id,  // avoid deprecation warning, backwards compatible
+            user: game.user.id,
             speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-            content: `<h2>${label} Roll</h2><h3>${option.innerText}</h3>`,
-            rolls: roll,
-            sound: CONFIG.sounds.dice
+            content: await foundry.applications.handlebars.renderTemplate(template, templateData),
+            rolls: [roll],
+            sound: CONFIG.sounds.dice,
         };
 
         await ChatMessage.create(rollMessage);
     }
 
-   async  _onAttributeChanged(event) {
-        const select = event.target;
+    /**
+     * @this {DefinitelyWizardsActorSheet}
+     * @param {PointerEvent} _event
+     * @param {HTMLElement} target
+     */
+    static async _onAttributeRoll(_event, target) {
+        const formula = target.dataset.roll ?? "1d6";
+        const roll = new Roll(formula, this.actor.getRollData());
+        await roll.evaluate();
 
-        if(event.currentTarget.name === "system.player-class") {
-            this._onClassChanged(event);
+        const parent = target.closest(".attribute");
+        if (!parent) return;
+
+        const labelEl = parent.querySelector("label");
+        const select = /** @type {HTMLSelectElement | null} */ (parent.querySelector("select"));
+        if (!select) return;
+
+        const label = labelEl?.textContent ?? "";
+        const attributeName = select.name;
+        const option = select.options[roll.total];
+        if (!option) return;
+
+        /** @type {Record<string, any>} */
+        const updateData = { [attributeName]: option.value };
+        if (attributeName === "system.playerClass") {
+            const classDescKey =
+                CONFIG.DEFINITELY_WIZARDS?.playerClasses?.[option.value]?.description;
+            updateData["system.classDescription"] = classDescKey
+                ? game.i18n.localize(classDescKey)
+                : "";
+        }
+
+        await this.actor.update(updateData);
+
+        const rollMessage = {
+            user: game.user.id,
+            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+            content: `<div class="definitelywizards chat-card"><h2>${label} Roll</h2><h3>${option.textContent}</h3></div>`,
+            rolls: [roll],
+            sound: CONFIG.sounds.dice,
+        };
+
+        await ChatMessage.create(rollMessage);
+    }
+
+    /**
+     * @this {DefinitelyWizardsActorSheet}
+     * @param {PointerEvent} _event
+     * @param {HTMLElement} target
+     */
+    static async _onAddItem(_event, target) {
+        const itemType = target.dataset.itemType ?? "";
+        if (itemType.length > 0) {
+            const created = await this.actor.createEmbeddedDocuments("Item", [
+                { type: itemType, name: game.i18n.localize("DW.NewItemName") },
+            ]);
+            await created[0]?.sheet.render(true);
         }
     }
 
-    async _onClassChanged(event) {
-        await this.updateClass(event.target.value);
+    /**
+     * @this {DefinitelyWizardsActorSheet}
+     * @param {PointerEvent} _event
+     * @param {HTMLElement} target
+     */
+    static async _onEditItem(_event, target) {
+        const row = /** @type {HTMLElement | null} */ (target.closest("[data-item-id]"));
+        const itemID = row?.dataset.itemId;
+        if (!itemID) return;
+        const item = this.actor.items.get(itemID);
+        if (item) {
+            await item.sheet.render(true);
+        }
     }
 
-    async updateClass(className) {
-        let classDesc = this.actor.system.playerClasses[className].description;
-        this.actor.update({ "system.player-class": className});
-        this.actor.update({ "system.class-description": game.i18n.localize(classDesc)});
+    /**
+     * @this {DefinitelyWizardsActorSheet}
+     * @param {PointerEvent} _event
+     * @param {HTMLElement} target
+     */
+    static async _onDeleteItem(_event, target) {
+        const row = /** @type {HTMLElement | null} */ (target.closest("[data-item-id]"));
+        const itemID = row?.dataset.itemId;
+        if (!itemID) return;
+        const item = this.actor.items.get(itemID);
+        if (!item) return;
+
+        const confirmed = await foundry.applications.api.DialogV2.confirm({
+            window: {
+                title: `${game.i18n.localize("DW.ConfirmItemDelete")}: ${item.name}`,
+            },
+            content: `<p>${game.i18n.localize("DW.ConfirmItemDeleteText")}</p>`,
+            rejectClose: false,
+            modal: true,
+        });
+
+        if (confirmed) {
+            await item.delete();
+        }
     }
 
-    async rendering(event) {
-        const root = event.element[0];
-        const wizardStatElement = root.querySelector("#stat-wizard .stat-value");
-        const wildStatElement = root.querySelector("#stat-wild .stat-value");
-        const classElement = root.querySelector(".attribute select[name='system.player-class']");
-        const prop1Element = root.querySelector(".attribute select[name='system.prop-1']");
-        const prop2Element = root.querySelector(".attribute select[name='system.prop-2']");
-        let wizardVal = parseInt(wizardStatElement.value, 10);
-        let wildVal = parseInt(wildStatElement.value, 10);
-        let classValue = classElement.value;
-        let prop1Value = prop1Element.value;
-        let prop2Value = prop2Element.value;
+    /**
+     * @this {DefinitelyWizardsActorSheet}
+     * @param {PointerEvent} _event
+     * @param {HTMLElement} target
+     */
+    static async _onRollItem(_event, target) {
+        const row = /** @type {HTMLElement | null} */ (target.closest("[data-item-id]"));
+        const itemID = row?.dataset.itemId;
+        if (!itemID) return;
+        const item = this.actor.items.get(itemID);
+        if (!item) return;
 
-        if(classValue === "custom") {
-            $(root.querySelector(".customClass")).show();
-        } else {
-            $(root.querySelector(".customClass")).hide();
-        }
+        const messageData = {
+            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+            content: `
+                <div class="definitelywizards chat-card">
+                    <div class="chatItem flexrow">
+                        <div class="item-image" tabindex="0" aria-label="${item.name}" style="background-image: url('${item.img}')"></div>
+                        <h4>${item.name}</h4>
+                    </div>
+                    <div>${item.system.description ?? ""}</div>
+                </div>`,
+        };
 
-        if(classValue === "none") {
-            $(root.querySelector("#class-description-panel")).hide();
-        } else {
-            $(root.querySelector("#class-description-panel")).show();
-        }
-
-        if (prop1Value === "custom") {
-            $(root.querySelector(".customProp1")).show();
-        } else {
-            $(root.querySelector(".customProp1")).hide();
-        }
-
-        if (prop2Value === "custom") {
-            $(root.querySelector(".customProp2")).show();
-        } else {
-            $(root.querySelector(".customProp2")).hide();
-        }
-
-        // Color a stat red if it's value is six.
-        if (wizardVal >= 6) {
-            wizardStatElement.classList.add("error-red");
-        }
-
-        if (wildVal >= 6) {
-            wildStatElement.classList.add("error-red");
-        }
+        await ChatMessage.create(messageData);
     }
 }

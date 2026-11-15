@@ -1,0 +1,86 @@
+{
+  "files": {
+    "ignoreUnknown": true,
+    "includes": [
+      "**/*.js",
+      "**/*.mjs",
+      "**/*.json",
+      "**/*.css",
+      "!node_modules",
+      "!packs",
+      "!templates",
+      "!resources/fonts"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 4,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "complexity": {
+        "noThisInStatic": "off"
+      },
+      "style": {
+        "noRestrictedGlobals": {
+          "level": "error",
+          "options": {
+            "deniedGlobals": {
+              "ActorSheet": "Use foundry.applications.sheets.ActorSheetV2 instead.",
+              "ItemSheet": "Use foundry.applications.sheets.ItemSheetV2 instead.",
+              "FormApplication": "Use foundry.applications.api.ApplicationV2 instead.",
+              "Application": "Use foundry.applications.api.ApplicationV2 instead.",
+              "Dialog": "Use foundry.applications.api.DialogV2 instead.",
+              "renderTemplate": "Use foundry.applications.handlebars.renderTemplate instead.",
+              "TextEditor": "Use foundry.applications.ux.TextEditor.implementation instead.",
+              "DEFAULT_TOKEN": "Use Item.DEFAULT_ICON or CONST.DEFAULT_TOKEN instead.",
+              "Actors": "Use foundry.applications.apps.DocumentSheetConfig instead.",
+              "Items": "Use foundry.applications.apps.DocumentSheetConfig instead.",
+              "$": "Use native DOM APIs instead of jQuery.",
+              "jQuery": "Use native DOM APIs instead of jQuery."
+            }
+          }
+        }
+      }
+    }
+  },
+  "javascript": {
+    "globals": [
+      "foundry",
+      "game",
+      "CONFIG",
+      "Hooks",
+      "Actor",
+      "Item",
+      "Roll",
+      "RollTable",
+      "ChatMessage",
+      "CONST",
+      "Handlebars",
+      "ui",
+      "canvas"
+    ],
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always"
+    }
+  },
+  "json": {
+    "formatter": {
+      "indentWidth": 2
+    }
+  },
+  "css": {
+    "formatter": {
+      "enabled": true,
+      "indentWidth": 4
+    },
+    "linter": {
+      "enabled": true
+    }
+  }
+}

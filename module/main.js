@@ -1,68 +1,71 @@
 import { DefinitelyWizardsActor } from "./actor.js";
 import { DefinitelyWizardsActorSheet } from "./actor-sheet.js";
+import * as Chat from "./chat.js";
+import {
+    CharacterDataModel,
+    DEFINITELY_WIZARDS,
+    DefinitelyWizardsItemDataModel,
+} from "./data-models.js";
 import { DefinitelyWizardsItemSheet } from "./item-sheet.js";
-import * as Chat from "./chat.js"
 
-Hooks.once("init", async function () {
-    console.log(`DefinitelyWizards: Initializing`);
+Hooks.once("init", async () => {
+    console.log("DefinitelyWizards: Initializing");
 
-    // Define custom Entity classes
-    if (foundry.utils.isNewerVersion(game.data.version, "0.8.0")) {
-        CONFIG.Actor.documentClass = DefinitelyWizardsActor;
-    } else {
-        CONFIG.Actor.entityClass = DefinitelyWizardsActor;
-    }
+    CONFIG.DEFINITELY_WIZARDS = DEFINITELY_WIZARDS;
+    CONFIG.Actor.documentClass = DefinitelyWizardsActor;
+    CONFIG.Actor.dataModels.character = CharacterDataModel;
+    CONFIG.Item.dataModels.Prop = DefinitelyWizardsItemDataModel;
+    CONFIG.Item.dataModels.Spell = DefinitelyWizardsItemDataModel;
+    CONFIG.Item.dataModels.MiscItem = DefinitelyWizardsItemDataModel;
 
-    // Register sheet application classes
-    Actors.unregisterSheet("core", ActorSheet);
-    Actors.registerSheet("definitelywizards", DefinitelyWizardsActorSheet, { label: "Definitely Wizards Character Sheet (Default)", makeDefault: true });
+    const { DocumentSheetConfig } = foundry.applications.apps;
+    DocumentSheetConfig.unregisterSheet(Actor, "core", foundry.appv1.sheets.ActorSheet);
+    DocumentSheetConfig.registerSheet(Actor, "definitely-wizards", DefinitelyWizardsActorSheet, {
+        label: "Definitely Wizards Character Sheet (Default)",
+        makeDefault: true,
+    });
 
-    Items.unregisterSheet("core", ItemSheet);
-    Items.registerSheet("definitelywizards", DefinitelyWizardsItemSheet, { label: "Definitely Wizards Item Sheet (Default)", makeDefault: true });
+    DocumentSheetConfig.unregisterSheet(Item, "core", foundry.appv1.sheets.ItemSheet);
+    DocumentSheetConfig.registerSheet(Item, "definitely-wizards", DefinitelyWizardsItemSheet, {
+        label: "Definitely Wizards Item Sheet (Default)",
+        makeDefault: true,
+    });
 
-    Handlebars.registerHelper("removeProperty", function (obj, property) {
+    Handlebars.registerHelper("removeProperty", (obj, property) => {
         delete obj[property];
         return obj;
     });
 
-    // CONFIG.debug.hooks = true;
+    Handlebars.registerHelper("formatHTMLMessage", (str) => new Handlebars.SafeString(str ?? ""));
 });
 
-Hooks.once("ready", async function () {
-    // Make sure all roll tables are always present.
-    const existingRollTables = [];
+Hooks.once("ready", async () => {
+    if (!game.user.isGM) return;
+
+    const existingRollTables = new Set(game.tables.contents.map((doc) => doc.name));
     const rollTablesToAdd = [];
     const rollTables = {
-        Judge: "/systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-judge.json",
-        RoomType: "/systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-room-type.json",
-        MainObstacle: "/systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-main-obstacle.json",
-        AddedChallenge: "/systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-added-challenge.json",
-        Surprise: "/systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-surprise.json",
-        FinalTest: "/systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-final-test.json"
+        Judge: "systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-judge.json",
+        RoomType: "systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-room-type.json",
+        MainObstacle:
+            "systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-main-obstacle.json",
+        AddedChallenge:
+            "systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-added-challenge.json",
+        Surprise: "systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-surprise.json",
+        FinalTest:
+            "systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-final-test.json",
     };
 
-    if (foundry.utils.isNewerVersion(game.data.version, "0.8.0")) {
-        for (const document of game.collections.get("RollTable").contents) {
-            existingRollTables.push(document.name);
-        }
-    } else {
-        for (const document of RollTable.collection.entities) {
-            existingRollTables.push(document.name);
-        }
-    }
-
-    for (let [key, value] of Object.entries(rollTables)) {
-        if (existingRollTables.indexOf(key) === -1) {
-            const rollTable = await $.getJSON(value).then();
+    for (const [name, url] of Object.entries(rollTables)) {
+        if (!existingRollTables.has(name)) {
+            const rollTable = await foundry.utils.fetchJsonWithTimeout(url);
             rollTablesToAdd.push(rollTable);
         }
     }
 
-    RollTable.create(rollTablesToAdd);
+    if (rollTablesToAdd.length > 0) {
+        await RollTable.createDocuments(rollTablesToAdd);
+    }
 });
 
-Hooks.on("renderDefinitelyWizardsActorSheet", (ev) => {
-   ev.rendering(ev);
-});
-
-Hooks.on("renderChatLog", (app, html, data) => Chat.addChatListeners(html));
+Hooks.on("renderChatMessageHTML", (_message, html) => Chat.addChatListeners(html));

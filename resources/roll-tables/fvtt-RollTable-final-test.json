@@ -5,93 +5,75 @@
   "description": "",
   "results": [
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        1,
-        1
-      ],
+      "range": [1, 1],
       "drawn": false,
-      "documentCollection": "",
       "_id": "YEZR9oAxF9x6FYR6",
-      "text": "The key to the exit is in 3 parts, each on a necklace worn by 3 massive stone golems.",
+      "name": "The key to the exit is in 3 parts, each on a necklace worn by 3 massive stone golems.",
+      "description": "<p>The key to the exit is in 3 parts, each on a necklace worn by 3 massive stone golems.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        2,
-        2
-      ],
+      "range": [2, 2],
       "drawn": false,
-      "documentCollection": "",
       "_id": "GldfPM7Jep3V79R3",
-      "text": "A giant spider has made this room its nest.",
+      "name": "A giant spider has made this room its nest.",
+      "description": "<p>A giant spider has made this room its nest.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        3,
-        3
-      ],
+      "range": [3, 3],
       "drawn": false,
-      "documentCollection": "",
       "_id": "MRfL2wDWKAsKgVyU",
-      "text": "A group of animatronic soldiers guard the exit.",
+      "name": "A group of animatronic soldiers guard the exit.",
+      "description": "<p>A group of animatronic soldiers guard the exit.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        4,
-        4
-      ],
+      "range": [4, 4],
       "drawn": false,
-      "documentCollection": "",
       "_id": "VZiqVUr0mykfP5hL",
-      "text": "A huge stone obelisk shoots near-deadly lasers at anything that moves.",
+      "name": "A huge stone obelisk shoots near-deadly lasers at anything that moves.",
+      "description": "<p>A huge stone obelisk shoots near-deadly lasers at anything that moves.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        5,
-        5
-      ],
+      "range": [5, 5],
       "drawn": false,
-      "documentCollection": "",
       "_id": "aN9vjOaUYvzRoyLn",
-      "text": "You must defeat another group of wizards taking the test.",
+      "name": "You must defeat another group of wizards taking the test.",
+      "description": "<p>You must defeat another group of wizards taking the test.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        6,
-        6
-      ],
+      "range": [6, 6],
       "drawn": false,
-      "documentCollection": "",
       "_id": "1Y1yOZgQpsyJLigX",
-      "text": "Come up with your own or roll again twice.",
+      "name": "Come up with your own or roll again twice.",
+      "description": "<p>Come up with your own or roll again twice.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     }
   ],
@@ -109,8 +91,8 @@
   },
   "_stats": {
     "systemId": "definitely-wizards",
-    "systemVersion": "1",
-    "coreVersion": "10.291",
+    "systemVersion": "1.5.0",
+    "coreVersion": "14",
     "createdTime": 1675446575114,
     "modifiedTime": 1675446617706,
     "lastModifiedBy": "7tb3mKRi81OTM7ij"

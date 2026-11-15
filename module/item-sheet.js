@@ -1,33 +1,48 @@
+const { HandlebarsApplicationMixin } = foundry.applications.api;
+const { ItemSheetV2 } = foundry.applications.sheets;
+
 /**
- * Extend the basic ItemSheet
- * @extends {ItemSheet}
+ * Item sheet for the Definitely Wizards system using ApplicationV2.
  */
-
-export class DefinitelyWizardsItemSheet extends ItemSheet {
-    /** @override */
-    static get defaultOptions() {
-        return foundry.utils.mergeObject(super.defaultOptions, {
-            classes: ["definitelywizards", "sheet", "item"],
-            template: "systems/definitely-wizards/templates/item-sheet.html",
+export class DefinitelyWizardsItemSheet extends HandlebarsApplicationMixin(ItemSheetV2) {
+    static DEFAULT_OPTIONS = {
+        classes: ["definitelywizards", "sheet", "item", "theme-light"],
+        position: {
             width: 550,
-            height: 400
-        });
-    }
+            height: 400,
+        },
+        form: {
+            submitOnChange: true,
+            closeOnSubmit: false,
+        },
+    };
+
+    static PARTS = {
+        form: {
+            template: "systems/definitely-wizards/templates/item-sheet.html",
+        },
+    };
 
     /** @override */
-    getData(options) {
-        let baseData = super.getData(options);
-        let sheetData = {};
+    async _prepareContext(options) {
+        const context = await super._prepareContext(options);
+        const source = this.item.toObject();
+        const { TextEditor } = foundry.applications.ux;
 
-        sheetData = baseData.data;  // needed to handle the new 0.8.x data depth
-        sheetData.item = this.item.toObject(false);
-        sheetData.editable = this.options.editable;  // needed to fix TinyMCE due to missing editable parameter
+        context.item = this.item;
+        context.system = this.item.system;
+        context.source = source;
+        context.editable = this.isEditable;
+        context.owner = this.item.isOwner;
+        context.enrichedDescription = await TextEditor.implementation.enrichHTML(
+            this.item.system.description ?? "",
+            {
+                secrets: this.item.isOwner,
+                rollData: () => this.item.getRollData(),
+                relativeTo: this.item,
+            },
+        );
 
-        return sheetData;
-    }
-
-    /** @override */
-    activateListeners(html) {
-        super.activateListeners(html);
+        return context;
     }
 }

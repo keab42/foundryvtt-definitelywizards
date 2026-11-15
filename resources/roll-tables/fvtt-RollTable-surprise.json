@@ -5,93 +5,75 @@
   "description": "Add after the second chamber",
   "results": [
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        1,
-        1
-      ],
+      "range": [1, 1],
       "drawn": false,
-      "documentCollection": "",
       "_id": "CJ0F3fRL4WJIQHVZ",
-      "text": "The room begins to fill with freezing cold water.",
+      "name": "The room begins to fill with freezing cold water.",
+      "description": "<p>The room begins to fill with freezing cold water.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        2,
-        2
-      ],
+      "range": [2, 2],
       "drawn": false,
-      "documentCollection": "",
       "_id": "gRxepZQHsINnlMcq",
-      "text": "Players slowly shrink to 1/10 size.",
+      "name": "Players slowly shrink to 1/10 size.",
+      "description": "<p>Players slowly shrink to 1/10 size.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        3,
-        3
-      ],
+      "range": [3, 3],
       "drawn": false,
-      "documentCollection": "",
       "_id": "PK8iTLk5y8yKem0y",
-      "text": "The room is haunted.",
+      "name": "The room is haunted.",
+      "description": "<p>The room is haunted.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        4,
-        4
-      ],
+      "range": [4, 4],
       "drawn": false,
-      "documentCollection": "",
       "_id": "FGMtLwLWFVGM5OAd",
-      "text": "The ceiling begins to collapse.",
+      "name": "The ceiling begins to collapse.",
+      "description": "<p>The ceiling begins to collapse.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        5,
-        5
-      ],
+      "range": [5, 5],
       "drawn": false,
-      "documentCollection": "",
       "_id": "4OYfzwRaaUXku2Fa",
-      "text": "An element of the room controls a player’s mind and makes them attack the rest of the party.",
+      "name": "An element of the room controls a player’s mind and makes them attack the rest of the party.",
+      "description": "<p>An element of the room controls a player’s mind and makes them attack the rest of the party.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        6,
-        6
-      ],
+      "range": [6, 6],
       "drawn": false,
-      "documentCollection": "",
       "_id": "5uentrTo6otw3hD2",
-      "text": "Come up with your own or roll again twice.",
+      "name": "Come up with your own or roll again twice.",
+      "description": "<p>Come up with your own or roll again twice.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     }
   ],
@@ -108,8 +90,8 @@
   },
   "_stats": {
     "systemId": "definitely-wizards",
-    "systemVersion": "1",
-    "coreVersion": "10.291",
+    "systemVersion": "1.5.0",
+    "coreVersion": "14",
     "createdTime": 1675446515214,
     "modifiedTime": 1675446559501,
     "lastModifiedBy": "7tb3mKRi81OTM7ij"

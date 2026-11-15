@@ -1,4 +1,4 @@
-<div class="chat-card skill-roll" data-owner-id="{{owner}}" data-isWizardRoll="{{isWizardRoll}}" data-isSuccess="{{isSuccess}}">
+<div class="definitelywizards chat-card skill-roll" data-owner-id="{{owner}}" data-isWizardRoll="{{isWizardRoll}}" data-isSuccess="{{isSuccess}}">
     <div class="card-content">
         <p>
             <strong>
@@ -45,12 +45,11 @@
 
     {{#unless isSuccess}}
     <div class="card-buttons">
-        
-            {{#if isWizardRoll}}
-                <button class="rollConsequences">{{localize "DW.Wizard"}}: {{localize "DW.RollForConsequences"}}</button>
-            {{else}}
-                <button class="rollConsequences">{{localize "DW.Wild"}}: {{localize "DW.RollForConsequences"}}</button>
-            {{/if}}
+        {{#if isWizardRoll}}
+            <button type="button" class="rollConsequences">{{localize "DW.Wizard"}}: {{localize "DW.RollForConsequences"}}</button>
+        {{else}}
+            <button type="button" class="rollConsequences">{{localize "DW.Wild"}}: {{localize "DW.RollForConsequences"}}</button>
+        {{/if}}
     </div>
     {{/unless}}
 </div>

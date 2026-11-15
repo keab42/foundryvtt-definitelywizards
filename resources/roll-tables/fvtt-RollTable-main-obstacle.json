@@ -5,93 +5,75 @@
   "description": "Roll for all chambers",
   "results": [
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        1,
-        1
-      ],
+      "range": [1, 1],
       "drawn": false,
-      "documentCollection": "",
       "_id": "gj9eNft2KTjMarSX",
-      "text": "The room is full of tripwires, pressure plates, and other traps.",
+      "name": "The room is full of tripwires, pressure plates, and other traps.",
+      "description": "<p>The room is full of tripwires, pressure plates, and other traps.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        2,
-        2
-      ],
+      "range": [2, 2],
       "drawn": false,
-      "documentCollection": "",
       "_id": "ZQ0OBlEx4dXmynUG",
-      "text": "Some element of the room is animated and attacks the party.",
+      "name": "Some element of the room is animated and attacks the party.",
+      "description": "<p>Some element of the room is animated and attacks the party.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        3,
-        3
-      ],
+      "range": [3, 3],
       "drawn": false,
-      "documentCollection": "",
       "_id": "kOwTbgX4ynd9MvMp",
-      "text": "There is a force field in the center of the room which must be deactivated.",
+      "name": "There is a force field in the center of the room which must be deactivated.",
+      "description": "<p>There is a force field in the center of the room which must be deactivated.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        4,
-        4
-      ],
+      "range": [4, 4],
       "drawn": false,
-      "documentCollection": "",
       "_id": "y2mSFKKT4FJ49GYL",
-      "text": "The room is full of rabid vermin.",
+      "name": "The room is full of rabid vermin.",
+      "description": "<p>The room is full of rabid vermin.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        5,
-        5
-      ],
+      "range": [5, 5],
       "drawn": false,
-      "documentCollection": "",
       "_id": "dtsBVgXDyGVmprhh",
-      "text": "The objects in the room must be organized in a particular pattern to unlock the door.",
+      "name": "The objects in the room must be organized in a particular pattern to unlock the door.",
+      "description": "<p>The objects in the room must be organized in a particular pattern to unlock the door.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     },
     {
-      "type": 0,
+      "type": "text",
       "weight": 1,
-      "range": [
-        6,
-        6
-      ],
+      "range": [6, 6],
       "drawn": false,
-      "documentCollection": "",
       "_id": "zx60i3sAwLlc6Z8c",
-      "text": "Come up with your own or roll again twice.",
+      "name": "Come up with your own or roll again twice.",
+      "description": "<p>Come up with your own or roll again twice.</p>",
       "img": "icons/svg/d20-black.svg",
-      "documentId": null,
+      "documentUuid": null,
       "flags": {}
     }
   ],
@@ -108,8 +90,8 @@
   },
   "_stats": {
     "systemId": "definitely-wizards",
-    "systemVersion": "1",
-    "coreVersion": "10.291",
+    "systemVersion": "1.5.0",
+    "coreVersion": "14",
     "createdTime": 1675446370664,
     "modifiedTime": 1675446428994,
     "lastModifiedBy": "7tb3mKRi81OTM7ij"
