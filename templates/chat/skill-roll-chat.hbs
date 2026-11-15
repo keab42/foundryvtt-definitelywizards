@@ -1,4 +1,16 @@
-<div class="definitelywizards chat-card skill-roll" data-owner-id="{{owner}}" data-isWizardRoll="{{isWizardRoll}}" data-isSuccess="{{isSuccess}}">
+<div class="definitelywizards chat-card skill-roll" data-owner-id="{{owner}}" data-actor-uuid="{{actorUuid}}" data-actor-name="{{actorName}}" data-isWizardRoll="{{isWizardRoll}}" data-isSuccess="{{isSuccess}}">
+    {{#if spellName}}
+    <div class="chatItem flexrow dw-cast-spell-header">
+        {{#if spellImg}}
+        <div class="item-image" style="background-image: url('{{spellImg}}')"></div>
+        {{/if}}
+        <h4>{{spellName}}</h4>
+    </div>
+    {{#if spellDescription}}
+    <div class="dw-cast-spell-description">{{{spellDescription}}}</div>
+    {{/if}}
+    {{/if}}
+
     <div class="card-content">
         <p>
             <strong>
@@ -32,7 +44,25 @@
                 {{/if}}
             </p>
         {{/if}}
+
+        {{#if autoResetWizard}}
+        <p class="dw-reset-banner"><strong>{{localize "DW.WizardResetToTwo"}}</strong></p>
+        {{/if}}
+        {{#if autoResetWild}}
+        <p class="dw-reset-banner"><strong>{{localize "DW.WildResetToTwo"}}</strong></p>
+        {{/if}}
     </div>
+
+    {{#if isWitBonus}}
+    <div class="dw-wit-bonus-row">
+        <span class="dw-wit-label">{{localize "DW.WitBonusLabel"}}</span>
+        <span class="dw-dice-faces">
+            {{#each diceResults}}
+            <span class="dw-die-face {{#if active}}kept{{else}}dropped{{/if}}">{{result}}</span>
+            {{/each}}
+        </span>
+    </div>
+    {{/if}}
 
     <div class="dice-roll">
         <div class="dice-result">
@@ -43,13 +73,20 @@
         </div>
     </div>
 
-    {{#unless isSuccess}}
+    {{#if isSuccess}}
+        {{#unless isWizardRoll}}
+        <div class="card-buttons">
+            <button type="button" class="addWildDisguiseFail">{{localize "DW.DidNotDisguiseButton"}}</button>
+        </div>
+        {{/unless}}
+    {{else}}
     <div class="card-buttons">
         {{#if isWizardRoll}}
             <button type="button" class="rollConsequences">{{localize "DW.Wizard"}}: {{localize "DW.RollForConsequences"}}</button>
         {{else}}
             <button type="button" class="rollConsequences">{{localize "DW.Wild"}}: {{localize "DW.RollForConsequences"}}</button>
         {{/if}}
+        <button type="button" class="coverRoll">{{localize "DW.CoverButton"}}</button>
     </div>
-    {{/unless}}
+    {{/if}}
 </div>

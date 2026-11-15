@@ -26,10 +26,16 @@ v.1.3.0 25/09/2023
 V.1.4.0 10/10/2023
 - Updated for Foundry V12
 
-v1.5.0 15/11/2026
-- Updated for Foundry VTT v14
-- Migrated Actor and Item sheets to ApplicationV2 (ActorSheetV2 & ItemSheetV2) with ProseMirror rich text editors
-- Replaced template.json with TypeDataModel classes (CharacterDataModel & DefinitelyWizardsItemDataModel)
-- Replaced Less & Gulp build pipeline with native modern CSS scoped to .definitelywizards sheets and chat cards
-- Updated RollTables to Foundry v14 BaseTableResult schema
-- Added Biome, TypeScript (checkJs), Lefthook, and Foundry v14 static verification scripts
+v2.0.0 15/11/2026
+- Updated for Foundry VTT v14 (compatibility minimum/verified 14)
+- Migrated Actor and Item sheets to ApplicationV2 (ActorSheetV2 & ItemSheetV2) with ProseMirror rich text editors, resizable windows, and default Prop/Spell artwork
+- Replaced template.json with TypeDataModel classes (CharacterDataModel & DefinitelyWizardsItemDataModel) and legacy field migration
+- Enforced Wizard/Wild stat-6 lockouts and automatic opposite-stat reset to 2 on success, plus arrest alerts at Wild > 6 or when the entire party reaches Wild = 6 simultaneously
+- Upgraded chat resolution to event-sourced ChatMessage flags (resolvedMessageId) with Cover (+1 Wild), Couldn't Disguise (+1 Wild), Consequences rolling, and Wit Bonus (2d6kl) dice breakdown
+- Added starting Prop descriptions/hints and one-click Add to Props on the Attributes tab, plus Costuming (+1 Wizard / -1 Wild) buttons on Props and item chat cards
+- Auto-populated the 10 low-grade Wizard spells on new characters (plus Add Starting Spells), direct 1d6/Wit cast buttons, and improvised Wild Spell rolling on the Spells tab
+- Updated exam RollTables to Foundry v14 BaseTableResult schema and added MonsterFactoryCreature and MonsterFactoryTrait RollTables
+- Added interactive Practical Exam generator (game.definitelyWizards.generatePracticalExam) outputting to a GM Journal Entry or GM whisper in chat
+- Added GM Helpers (Generate Practical Exam macro) LevelDB compendium
+- Replaced Less & Gulp build pipeline with native CSS scoped to .definitelywizards sheets and chat cards
+- Added Biome, TypeScript (checkJs), Lefthook, GitHub Actions CI/Release workflows, and Foundry v14 verification and compendium build scripts

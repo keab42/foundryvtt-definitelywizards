@@ -1,6 +1,6 @@
 {
   "name": "definitely-wizards",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "description": "Definitely Wizards system for Foundry VTT v14",
   "type": "module",
   "private": true,
@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "check:foundry": "node scripts/check-foundry.mjs",
     "check": "npm run lint && npm run typecheck && npm run check:foundry",
+    "build:packs": "node scripts/build-compendiums.mjs",
     "prepare": "lefthook install"
   },
   "author": "",

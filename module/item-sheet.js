@@ -11,6 +11,9 @@ export class DefinitelyWizardsItemSheet extends HandlebarsApplicationMixin(ItemS
             width: 550,
             height: 400,
         },
+        window: {
+            resizable: true,
+        },
         form: {
             submitOnChange: true,
             closeOnSubmit: false,

@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Build & Publish Foundry VTT Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@d02ffc3e660e5361005f72537a77e71f92e737c7 # v4.1.0
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run verification suite
+        run: npm run check
+
+      - name: Verify version and stamp system.json release URLs
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          export VERSION="${RELEASE_TAG#v}"
+          node -e '
+            const fs = require("node:fs");
+            const version = process.env.VERSION;
+            const tag = process.env.RELEASE_TAG;
+            const repo = process.env.REPO;
+
+            const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+            const sys = JSON.parse(fs.readFileSync("system.json", "utf8"));
+
+            if (pkg.version !== version || sys.version !== version) {
+              console.error(
+                `Version mismatch: tag is ${tag} (${version}), package.json is ${pkg.version}, system.json is ${sys.version}`
+              );
+              process.exit(1);
+            }
+
+            sys.url = `https://github.com/${repo}`;
+            sys.manifest = `https://github.com/${repo}/releases/latest/download/system.json`;
+            sys.download = `https://github.com/${repo}/releases/download/${tag}/definitely-wizards.zip`;
+
+            fs.writeFileSync("system.json", `${JSON.stringify(sys, null, 2)}\n`);
+          '
+        shell: bash
+
+      - name: Package definitely-wizards.zip
+        run: |
+          zip -r definitely-wizards.zip \
+            system.json \
+            module/ \
+            styles/ \
+            templates/ \
+            lang/ \
+            packs/ \
+            resources/ \
+            LICENSE.txt \
+            README.md \
+            release-notes.txt
+
+      - name: Create GitHub Release and upload assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            definitely-wizards.zip \
+            system.json \
+            --title "Definitely Wizards $RELEASE_TAG" \
+            --generate-notes \
+            --verify-tag

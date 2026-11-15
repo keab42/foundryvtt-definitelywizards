@@ -1,19 +1,20 @@
-<div class="sheet-panel">
+<div class="dw-sheet-panel">
     {{!-- Sheet Header --}}
     <header class="sheet-header">
-        <div id="stat-panel">
-            <img class="profile-img" src="{{actor.img}}" data-action="editImage" data-field="img" title="{{actor.name}}" height="100" width="100" />
+        <div class="dw-stat-panel">
+            <img class="profile-img" src="{{actor.img}}" {{#if editable}}data-action="editImage" data-field="img"{{/if}} title="{{actor.name}}" height="100" width="100" />
             <h1 class="char-name">
-                <input name="name" type="text" value="{{actor.name}}" placeholder="{{localize 'DW.CharacterName'}}" />
+                <input name="name" type="text" value="{{actor.name}}" placeholder="{{localize 'DW.CharacterName'}}" {{#unless editable}}disabled{{/unless}} />
             </h1>
             {{!-- Stats Block --}}
-            <div id="stat-wizard">
+            <div class="dw-stat-block dw-stat-wizard">
                 <h2 class="stat-title">{{localize 'DW.Wizard'}}</h2>
                 <input class="stat-value {{#if isWizardHigh}}error-red{{/if}}" name="system.stats.wizard" type="number" value="{{system.stats.wizard}}"
                     readonly="readonly" />
-                <img class="stat-roll-single expand no-border" title="{{localize 'DW.WizardRollTooltip'}}" data-action="statRoll" data-roll="1d6"
+                {{#if editable}}
+                <img class="stat-roll-single expand no-border {{#if isWizardHigh}}stat-locked{{/if}}" title="{{wizardRollTooltip}}" data-action="statRoll" data-roll="1d6"
                     src="systems/definitely-wizards/resources/icons/die-six.svg" />
-                <img class="stat-roll-double expand no-border" title="{{localize 'DW.WizardRollWithWitTooltip'}}"
+                <img class="stat-roll-double expand no-border {{#if isWizardHigh}}stat-locked{{/if}}" title="{{wizardWitRollTooltip}}"
                     data-action="statRoll" data-roll="2d6kl" src="systems/definitely-wizards/resources/icons/die-six-double.svg" />
                 <img class="stat-button-plus no-border expand" data-action="statPlus" title="{{localize 'DW.AddToWizardTooltip'}}"
                     src="systems/definitely-wizards/resources/icons/plus.svg" />
@@ -21,15 +22,17 @@
                     src="systems/definitely-wizards/resources/icons/minus.svg" />
                 <img class="stat-button-reset no-border expand" data-action="statReset" title="{{localize 'DW.ResetWizardTooltip'}}"
                     src="systems/definitely-wizards/resources/icons/reset.svg" />
+                {{/if}}
             </div>
-            <div id="stat-wild">
+            <div class="dw-stat-block dw-stat-wild">
                 <h2 class="stat-title">{{localize 'DW.Wild'}}</h2>
                 <input class="stat-value {{#if isWildHigh}}error-red{{/if}}" name="system.stats.wild" type="number" value="{{system.stats.wild}}"
                     readonly="readonly" />
-                <img class="stat-roll-single expand no-border" data-action="statRoll" data-roll="1d6" title="{{localize 'DW.WildRollTooltip'}}"
+                {{#if editable}}
+                <img class="stat-roll-single expand no-border {{#if isWildHigh}}stat-locked{{/if}}" data-action="statRoll" data-roll="1d6" title="{{wildRollTooltip}}"
                     src="systems/definitely-wizards/resources/icons/die-six.svg" />
-                <img class="stat-roll-double expand no-border" data-action="statRoll" data-roll="2d6kl"
-                    title="{{localize 'DW.WildRollWithWitTooltip'}}"
+                <img class="stat-roll-double expand no-border {{#if isWildHigh}}stat-locked{{/if}}" data-action="statRoll" data-roll="2d6kl"
+                    title="{{wildWitRollTooltip}}"
                     src="systems/definitely-wizards/resources/icons/die-six-double.svg" />
                 <img class="stat-button-plus no-border expand" data-action="statPlus" title="{{localize 'DW.AddToWildTooltip'}}"
                     src="systems/definitely-wizards/resources/icons/plus.svg" />
@@ -37,6 +40,7 @@
                     src="systems/definitely-wizards/resources/icons/minus.svg" />
                 <img class="stat-button-reset no-border expand" data-action="statReset" title="{{localize 'DW.ResetWildTooltip'}}"
                     src="systems/definitely-wizards/resources/icons/reset.svg" />
+                {{/if}}
             </div>
         </div>
     </header>
@@ -53,44 +57,72 @@
     <section class="sheet-body">
         {{!-- Attributes --}}
         <div class="tab attributes {{tabs.attributes.cssClass}}" data-group="primary" data-tab="attributes">
-            <div id="attributes-tab">
-                <div id="attributes-panel">
+            <div class="dw-attributes-tab">
+                <div class="dw-attributes-panel">
                     <h2>{{localize 'DW.AttributesTitle'}}</h2>
-                    <div id="attributes">
-                        <div class="attribute" id="player-class">
+                    <div class="dw-attributes">
+                        <div class="attribute dw-player-class">
                             <label>{{localize 'DW.ClassDescriptor'}}</label>
-                            <select class="attribute-select" name="system.playerClass">
+                            <select class="attribute-select" name="system.playerClass" {{#unless editable}}disabled{{/unless}}>
                                 {{selectOptions config.playerClasses selected=system.playerClass labelAttr="label" localize=true}}
                             </select>
+                            {{#if editable}}
                             <img class="attribute-roll expand no-border" data-action="attributeRoll" data-roll="1d11"
                                 src="systems/definitely-wizards/resources/icons/die-six.svg" height="25" width="25" />
-                            <input class="customClass {{#unless showCustomClass}}hidden{{/unless}}" name="system.customClass" type="text" value="{{system.customClass}}" placeholder="{{localize 'DW.CustomClass'}}" />
+                            {{/if}}
+                            <input class="customClass {{#unless showCustomClass}}hidden{{/unless}}" name="system.customClass" type="text" value="{{system.customClass}}" placeholder="{{localize 'DW.CustomClass'}}" {{#unless editable}}disabled{{/unless}} />
                         </div>
                         <div class="attribute">
                             <label>{{localize 'DW.Prop1'}}</label>
-                            <select class="prop-select" name="system.prop1">
+                            <select class="prop-select" name="system.prop1" {{#unless editable}}disabled{{/unless}}>
                                 {{selectOptions config.props1 selected=system.prop1 labelAttr="label" localize=true}}
                             </select>
+                            {{#if editable}}
                             <img class="attribute-roll expand no-border" data-action="attributeRoll" data-roll="1d6"
                                 src="systems/definitely-wizards/resources/icons/die-six.svg" height="25" width="25" />
-                            <input class="customProp1 {{#unless showCustomProp1}}hidden{{/unless}}" name="system.customProp1" type="text" value="{{system.customProp1}}" placeholder="{{localize 'DW.CustomProp'}}" />
+                            {{#if canAddProp1}}
+                            <button type="button" class="add-starting-prop {{#if prop1InInventory}}in-inventory{{else}}missing{{/if}}"
+                                data-action="addStartingProp" data-prop-slot="prop1"
+                                title="{{#if prop1InInventory}}{{localize 'DW.StartingPropInInventory'}}{{else}}{{localize 'DW.StartingPropMissing'}}{{/if}}">
+                                <i class="fas {{#if prop1InInventory}}fa-check{{else}}fa-plus{{/if}}"></i>
+                                {{#if prop1InInventory}}{{localize 'DW.InPropsInventory'}}{{else}}{{localize 'DW.AddToProps'}}{{/if}}
+                            </button>
+                            {{/if}}
+                            {{/if}}
+                            <input class="customProp1 {{#unless showCustomProp1}}hidden{{/unless}}" name="system.customProp1" type="text" value="{{system.customProp1}}" placeholder="{{localize 'DW.CustomProp'}}" {{#unless editable}}disabled{{/unless}} />
+                            {{#if prop1Description}}
+                            <p class="prop-hint">{{prop1Description}}</p>
+                            {{/if}}
                         </div>
                         <div class="attribute">
                             <label>{{localize 'DW.Prop2'}}</label>
-                            <select class="prop-select" name="system.prop2">
+                            <select class="prop-select" name="system.prop2" {{#unless editable}}disabled{{/unless}}>
                                 {{selectOptions config.props2 selected=system.prop2 labelAttr="label" localize=true}}
                             </select>
+                            {{#if editable}}
                             <img class="attribute-roll expand no-border" data-action="attributeRoll" data-roll="1d6"
                                 src="systems/definitely-wizards/resources/icons/die-six.svg" height="25" width="25" />
-                            <input class="customProp2 {{#unless showCustomProp2}}hidden{{/unless}}" name="system.customProp2" type="text" value="{{system.customProp2}}" placeholder="{{localize 'DW.CustomItem'}}" />
+                            {{#if canAddProp2}}
+                            <button type="button" class="add-starting-prop {{#if prop2InInventory}}in-inventory{{else}}missing{{/if}}"
+                                data-action="addStartingProp" data-prop-slot="prop2"
+                                title="{{#if prop2InInventory}}{{localize 'DW.StartingPropInInventory'}}{{else}}{{localize 'DW.StartingPropMissing'}}{{/if}}">
+                                <i class="fas {{#if prop2InInventory}}fa-check{{else}}fa-plus{{/if}}"></i>
+                                {{#if prop2InInventory}}{{localize 'DW.InPropsInventory'}}{{else}}{{localize 'DW.AddToProps'}}{{/if}}
+                            </button>
+                            {{/if}}
+                            {{/if}}
+                            <input class="customProp2 {{#unless showCustomProp2}}hidden{{/unless}}" name="system.customProp2" type="text" value="{{system.customProp2}}" placeholder="{{localize 'DW.CustomItem'}}" {{#unless editable}}disabled{{/unless}} />
+                            {{#if prop2Description}}
+                            <p class="prop-hint">{{prop2Description}}</p>
+                            {{/if}}
                         </div>
                     </div>
                 </div>
                 {{!-- Class Description --}}
-                <div id="class-description-panel" class="{{#unless showClassDescription}}hidden{{/unless}}">
+                <div class="dw-class-description-panel {{#unless showClassDescription}}hidden{{/unless}}">
                     <h2>{{localize "DW.ClassDescription"}}</h2>
                     {{#if editable}}
-                    <prose-mirror name="system.classDescription" value="{{source.system.classDescription}}" toggled="true" collaborate="false">
+                    <prose-mirror name="system.classDescription" value="{{source.system.classDescription}}" data-document-uuid="{{actor.uuid}}" toggled>
                         {{{enrichedClassDescription}}}
                     </prose-mirror>
                     {{else}}
@@ -102,10 +134,10 @@
 
         {{!-- Biography --}}
         <div class="tab bio {{tabs.bio.cssClass}}" data-group="primary" data-tab="bio">
-            <div id="bio-panel">
+            <div class="dw-bio-panel">
                 <h2>{{localize 'DW.BiographyTitle'}}</h2>
                 {{#if editable}}
-                <prose-mirror name="system.biography" value="{{source.system.biography}}" toggled="true" collaborate="false">
+                <prose-mirror name="system.biography" value="{{source.system.biography}}" data-document-uuid="{{actor.uuid}}" toggled>
                     {{{enrichedBiography}}}
                 </prose-mirror>
                 {{else}}
@@ -116,98 +148,137 @@
 
         {{!-- Props and Items --}}
         <div class="tab items {{tabs.items.cssClass}}" data-group="primary" data-tab="items">
-            {{!-- Props --}}
-            <div id="props-panel">
-                <h2>{{localize 'DW.PropsTitle'}}</h2>
-                <ol>
-                    <li class="props-header flexrow">
-                        <h3 class="prop-name flexrow">{{localize 'DW.ItemName'}}</h3>
-                        <div class="prop-detail prop-description">{{localize 'DW.ItemDescription'}}</div>
-                        <div class="prop-controls flexrow">
-                            <span class="add-prop" data-action="addItem" data-item-type="Prop"><i class="fas fa-plus"></i> Add Prop</span>
-                        </div>
-                    </li>
-                </ol>
-                <ol class="dw-prop-list">
-                    {{#each props}}
-                    <li class="prop item flexrow draggable" data-item-id="{{_id}}" draggable="true">
-                        <div class="prop-name flexrow prop-roll" data-action="rollItem">
-                            <div class="prop-image" tabindex="0" role="button" aria-label="{{name}}" style="background-image: url('{{img}}')"></div>
-                            <h4>{{name}}</h4>
-                        </div>
-                        <div class="prop-detail prop-description">
-                            {{{system.description}}}
-                        </div>
-                        <div class="prop-controls flexrow">
-                            <a class="prop-control prop-edit" data-action="editItem" title="{{localize 'DW.PropEdit'}}"><i class="fas fa-edit"></i></a>
-                            <a class="prop-control prop-delete" data-action="deleteItem" title="{{localize 'DW.PropDelete'}}"><i class="fas fa-trash"></i></a>
-                        </div>
-                    </li>
-                    {{/each}}
-                </ol>
-            </div>
-            {{!-- Items --}}
-            <div id="items-panel">
-                <h2>{{localize 'DW.ItemsTitle'}}</h2>
-                <ol>
-                    <li class="items-header flexrow">
-                        <h3 class="item-name flexrow">{{localize 'DW.ItemName'}}</h3>
-                        <div class="item-detail item-description">{{localize 'DW.ItemDescription'}}</div>
-                        <div class="item-controls flexrow">
-                            <span class="add-item" data-action="addItem" data-item-type="MiscItem"><i class="fas fa-plus"></i> Add Item</span>
-                        </div>
-                    </li>
-                </ol>
-                <ol class="dw-item-list">
-                    {{#each miscItems}}
-                    <li class="item flexrow draggable" data-item-id="{{_id}}" draggable="true">
-                        <div class="item-name flexrow item-roll" data-action="rollItem">
-                            <div class="item-image" tabindex="0" role="button" aria-label="{{name}}" style="background-image: url('{{img}}')"></div>
-                            <h4>{{name}}</h4>
-                        </div>
-                        <div class="item-detail item-description">
-                            {{{system.description}}}
-                        </div>
-                        <div class="item-controls flexrow">
-                            <a class="item-control item-edit" data-action="editItem" title="{{localize 'DW.ItemEdit'}}"><i class="fas fa-edit"></i></a>
-                            <a class="item-control item-delete" data-action="deleteItem" title="{{localize 'DW.ItemDelete'}}"><i class="fas fa-trash"></i></a>
-                        </div>
-                    </li>
-                    {{/each}}
-                </ol>
+            <div class="dw-middle-panel">
+                {{!-- Props --}}
+                <div class="dw-props-panel">
+                    <h2>{{localize 'DW.PropsTitle'}}</h2>
+                    <ol>
+                        <li class="props-header flexrow">
+                            <h3 class="prop-name flexrow">{{localize 'DW.ItemName'}}</h3>
+                            <div class="prop-detail prop-description">{{localize 'DW.ItemDescription'}}</div>
+                            <div class="prop-controls flexrow">
+                                {{#if editable}}
+                                <span class="add-prop" data-action="addItem" data-item-type="Prop"><i class="fas fa-plus"></i> {{localize 'DW.AddPropButton'}}</span>
+                                {{/if}}
+                            </div>
+                        </li>
+                    </ol>
+                    <ol class="dw-prop-list">
+                        {{#each props}}
+                        <li class="prop item flexrow draggable" data-item-id="{{_id}}" draggable="true">
+                            <div class="prop-name flexrow {{#if ../editable}}prop-roll{{/if}}" {{#if ../editable}}data-action="rollItem"{{/if}}>
+                                <div class="prop-image" {{#if ../editable}}tabindex="0" role="button"{{/if}} aria-label="{{name}}" style="background-image: url('{{img}}')"></div>
+                                <h4>{{name}}</h4>
+                            </div>
+                            <div class="prop-detail prop-description">
+                                {{{system.description}}}
+                            </div>
+                            <div class="prop-controls flexrow">
+                                {{#if ../editable}}
+                                <button type="button" class="costuming-btn costuming-wizard" data-action="propCostuming" data-stat="wizard" title="{{localize 'DW.CostumingWizardTooltip'}}">{{localize 'DW.CostumingWizardShort'}}</button>
+                                <button type="button" class="costuming-btn costuming-wild" data-action="propCostuming" data-stat="wild" title="{{localize 'DW.CostumingWildTooltip'}}">{{localize 'DW.CostumingWildShort'}}</button>
+                                <a class="prop-control prop-edit" data-action="editItem" title="{{localize 'DW.PropEdit'}}"><i class="fas fa-edit"></i></a>
+                                <a class="prop-control prop-delete" data-action="deleteItem" title="{{localize 'DW.PropDelete'}}"><i class="fas fa-trash"></i></a>
+                                {{/if}}
+                            </div>
+                        </li>
+                        {{/each}}
+                    </ol>
+                </div>
+                {{!-- Items --}}
+                <div class="dw-items-panel">
+                    <h2>{{localize 'DW.ItemsTitle'}}</h2>
+                    <ol>
+                        <li class="items-header flexrow">
+                            <h3 class="item-name flexrow">{{localize 'DW.ItemName'}}</h3>
+                            <div class="item-detail item-description">{{localize 'DW.ItemDescription'}}</div>
+                            <div class="item-controls flexrow">
+                                {{#if editable}}
+                                <span class="add-item" data-action="addItem" data-item-type="MiscItem"><i class="fas fa-plus"></i> {{localize 'DW.AddItemButton'}}</span>
+                                {{/if}}
+                            </div>
+                        </li>
+                    </ol>
+                    <ol class="dw-item-list">
+                        {{#each miscItems}}
+                        <li class="item flexrow draggable" data-item-id="{{_id}}" draggable="true">
+                            <div class="item-name flexrow {{#if ../editable}}item-roll{{/if}}" {{#if ../editable}}data-action="rollItem"{{/if}}>
+                                <div class="item-image" {{#if ../editable}}tabindex="0" role="button"{{/if}} aria-label="{{name}}" style="background-image: url('{{img}}')"></div>
+                                <h4>{{name}}</h4>
+                            </div>
+                            <div class="item-detail item-description">
+                                {{{system.description}}}
+                            </div>
+                            <div class="item-controls flexrow">
+                                {{#if ../editable}}
+                                <a class="item-control item-edit" data-action="editItem" title="{{localize 'DW.ItemEdit'}}"><i class="fas fa-edit"></i></a>
+                                <a class="item-control item-delete" data-action="deleteItem" title="{{localize 'DW.ItemDelete'}}"><i class="fas fa-trash"></i></a>
+                                {{/if}}
+                            </div>
+                        </li>
+                        {{/each}}
+                    </ol>
+                </div>
             </div>
         </div>
 
         {{!-- Spells --}}
         <div class="tab spells {{tabs.spells.cssClass}}" data-group="primary" data-tab="spells">
-            <div id="spells-panel">
-                <h2>{{localize 'DW.SpellsTitle'}}</h2>
+            <div class="dw-spells-panel">
+                {{#if editable}}
+                <div class="dw-wild-spell-bar">
+                    <span class="dw-wild-spell-title">{{localize 'DW.WildSpellSectionTitle'}}</span>
+                    <input type="text" class="dw-wild-spell-note" placeholder="{{localize 'DW.WildSpellInputPlaceholder'}}" />
+                    <div class="dw-wild-spell-actions">
+                        <button type="button" class="cast-spell-btn" data-action="castWildSpell" data-roll="1d6" title="{{localize 'DW.WildSpellCastTooltip'}}">{{localize 'DW.Roll1d6Short'}}</button>
+                        <button type="button" class="cast-spell-btn" data-action="castWildSpell" data-roll="2d6kl" title="{{localize 'DW.WildSpellCastWithWitTooltip'}}">{{localize 'DW.RollWitShort'}}</button>
+                    </div>
+                </div>
+                {{/if}}
+                <div class="dw-spells-title-row">
+                    <h2>{{localize 'DW.SpellsTitle'}}</h2>
+                    {{#if editable}}
+                    {{#if hasMissingDefaultSpells}}
+                    <button type="button" class="add-default-spells-btn" data-action="addDefaultSpells" title="{{localize 'DW.AddDefaultSpellsTooltip'}}">
+                        <i class="fas fa-wand-magic-sparkles"></i> {{localize 'DW.AddDefaultSpells'}}
+                    </button>
+                    {{/if}}
+                    {{/if}}
+                </div>
                 <ol>
                     <li class="spells-header flexrow">
                         <h3 class="spell-name flexrow">{{localize 'DW.ItemName'}}</h3>
                         <div class="spell-detail spell-description">{{localize 'DW.ItemDescription'}}</div>
                         <div class="spell-controls flexrow">
-                            <span class="add-spell" data-action="addItem" data-item-type="Spell"><i class="fas fa-plus"></i> Add Spell</span>
+                            {{#if editable}}
+                            <span class="add-spell" data-action="addItem" data-item-type="Spell"><i class="fas fa-plus"></i> {{localize 'DW.AddSpellButton'}}</span>
+                            {{/if}}
                         </div>
                     </li>
                 </ol>
-                <ol class="dw-spell-list">
-                    {{#each spells}}
-                    <li class="spell item flexrow draggable" data-item-id="{{_id}}" draggable="true">
-                        <div class="spell-name flexrow spell-roll" data-action="rollItem">
-                            <div class="spell-image" tabindex="0" role="button" aria-label="{{name}}" style="background-image: url('{{img}}')"></div>
-                            <h4>{{name}}</h4>
-                        </div>
-                        <div class="spell-detail spell-description">
-                            {{{system.description}}}
-                        </div>
-                        <div class="spell-controls flexrow">
-                            <a class="spell-control spell-edit" data-action="editItem" title="{{localize 'DW.SpellEdit'}}"><i class="fas fa-edit"></i></a>
-                            <a class="spell-control spell-delete" data-action="deleteItem" title="{{localize 'DW.SpellDelete'}}"><i class="fas fa-trash"></i></a>
-                        </div>
-                    </li>
-                    {{/each}}
-                </ol>
+                <div class="dw-spells-scroll">
+                    <ol class="dw-spell-list">
+                        {{#each spells}}
+                        <li class="spell item flexrow draggable" data-item-id="{{_id}}" draggable="true">
+                            <div class="spell-name flexrow {{#if ../editable}}spell-roll{{/if}}" {{#if ../editable}}data-action="rollItem"{{/if}}>
+                                <div class="spell-image" {{#if ../editable}}tabindex="0" role="button"{{/if}} aria-label="{{name}}" style="background-image: url('{{img}}')"></div>
+                                <h4>{{name}}</h4>
+                            </div>
+                            <div class="spell-detail spell-description">
+                                {{{system.description}}}
+                            </div>
+                            <div class="spell-controls flexrow">
+                                {{#if ../editable}}
+                                <button type="button" class="cast-spell-btn" data-action="castSpell" data-roll="1d6" title="{{localize 'DW.CastSpellTooltip'}}">{{localize 'DW.Roll1d6Short'}}</button>
+                                <button type="button" class="cast-spell-btn" data-action="castSpell" data-roll="2d6kl" title="{{localize 'DW.CastSpellWithWitTooltip'}}">{{localize 'DW.RollWitShort'}}</button>
+                                <a class="spell-control spell-edit" data-action="editItem" title="{{localize 'DW.SpellEdit'}}"><i class="fas fa-edit"></i></a>
+                                <a class="spell-control spell-delete" data-action="deleteItem" title="{{localize 'DW.SpellDelete'}}"><i class="fas fa-trash"></i></a>
+                                {{/if}}
+                            </div>
+                        </li>
+                        {{/each}}
+                    </ol>
+                </div>
             </div>
         </div>
     </section>

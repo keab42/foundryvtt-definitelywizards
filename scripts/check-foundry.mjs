@@ -8,15 +8,19 @@ function error(msg) {
     errors.push(msg);
 }
 
-// 1. Validate system.json
+// 1. Validate system.json and package.json
 const systemPath = path.join(rootDir, "system.json");
+const packagePath = path.join(rootDir, "package.json");
+let system = null;
+
 if (!fs.existsSync(systemPath)) {
     error("Missing system.json");
 } else {
-    const system = JSON.parse(fs.readFileSync(systemPath, "utf8"));
-    if (system.compatibility?.verified !== "14") {
+    system = JSON.parse(fs.readFileSync(systemPath, "utf8"));
+    const verified = system.compatibility?.verified;
+    if (typeof verified !== "string" || !/^14(\.\d+)*$/.test(verified)) {
         error(
-            `system.json compatibility.verified must be "14" (found "${system.compatibility?.verified}")`,
+            `system.json compatibility.verified must be "14" or "14.x" (found ${JSON.stringify(verified)})`,
         );
     }
     if (!system.documentTypes?.Actor?.character) {
@@ -49,9 +53,37 @@ if (!fs.existsSync(systemPath)) {
         }
     }
     for (const pack of system.packs ?? []) {
-        if (!fs.existsSync(path.join(rootDir, pack.path))) {
+        const packDir = path.join(rootDir, pack.path);
+        if (!fs.existsSync(packDir)) {
             error(`system.json pack path missing on disk: ${pack.path}`);
+            continue;
         }
+        const currentPath = path.join(packDir, "CURRENT");
+        if (!fs.existsSync(currentPath)) {
+            error(`system.json pack missing CURRENT file: ${pack.path}/CURRENT`);
+            continue;
+        }
+        const manifestName = fs.readFileSync(currentPath, "utf8").trim();
+        if (!/^MANIFEST-\d+$/.test(manifestName)) {
+            error(
+                `${pack.path}/CURRENT must reference a MANIFEST-* file (found ${JSON.stringify(manifestName)})`,
+            );
+            continue;
+        }
+        if (!fs.existsSync(path.join(packDir, manifestName))) {
+            error(`${pack.path}/CURRENT points to missing manifest file: ${manifestName}`);
+        }
+    }
+}
+
+if (!fs.existsSync(packagePath)) {
+    error("Missing package.json");
+} else if (system) {
+    const pkg = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+    if (!pkg.version || !system.version || pkg.version !== system.version) {
+        error(
+            `package.json version (${JSON.stringify(pkg.version)}) must match system.json version (${JSON.stringify(system.version)})`,
+        );
     }
 }
 

@@ -9,6 +9,8 @@ declare namespace foundry {
         ): T & U;
         function fetchJsonWithTimeout(url: string, options?: Record<string, unknown>): Promise<any>;
         function isNewerVersion(v1: string, v0: string): boolean;
+        function fromUuid(uuid: string): Promise<any>;
+        function escapeHTML(str: string): string;
     }
 
     namespace data {
@@ -23,6 +25,7 @@ declare namespace foundry {
                 integer?: boolean;
                 min?: number;
                 max?: number;
+                choices?: string[] | Record<string, string>;
             }
             class DataField {
                 constructor(options?: DataFieldOptions);
@@ -181,6 +184,28 @@ declare namespace foundry {
                     rejectClose?: boolean;
                     modal?: boolean;
                 }): Promise<boolean | null>;
+                static input(config?: {
+                    window?: { title?: string; icon?: string };
+                    content?: string;
+                    ok?: {
+                        label?: string;
+                        icon?: string;
+                    };
+                    buttons?: Array<{
+                        action: string;
+                        label?: string;
+                        icon?: string;
+                        type?: string;
+                        default?: boolean;
+                        callback?: (
+                            event: PointerEvent | SubmitEvent,
+                            button: HTMLButtonElement,
+                            dialog: DialogV2,
+                        ) => any;
+                    }>;
+                    rejectClose?: boolean;
+                    modal?: boolean;
+                }): Promise<Record<string, any> | null>;
             }
         }
 
@@ -250,19 +275,28 @@ declare class Actor {
     static DEFAULT_ICON: string;
     id: string;
     _id: string;
+    uuid: string;
+    documentName: string;
     name: string;
     img: string;
     type: string;
     isOwner: boolean;
+    hasPlayerOwner: boolean;
+    isToken?: boolean;
+    parent?: TokenDocumentLike | null;
     system: Record<string, any>;
     items: {
         get(id: string): Item | undefined;
+        size: number;
         contents: Item[];
+        filter(predicate: (item: Item) => boolean): Item[];
+        some(predicate: (item: Item) => boolean): boolean;
         [Symbol.iterator](): IterableIterator<Item>;
     };
     sheet: {
         render(force?: boolean | Record<string, any>): Promise<any>;
     };
+    _onCreate(data: Record<string, any>, options: Record<string, any>, userId: string): void;
     getRollData(): Record<string, any>;
     toObject(source?: boolean): Record<string, any>;
     update(data: Record<string, any>, options?: Record<string, any>): Promise<this | undefined>;
@@ -271,14 +305,28 @@ declare class Actor {
         data: Array<Record<string, any>>,
         operation?: Record<string, any>,
     ): Promise<any[]>;
-    updateStat?(isWizard: boolean, offset: number): Promise<void>;
+    updateStat?(
+        isWizard: boolean,
+        offset: number,
+        options?: {
+            suppressBothLockedAlert?: boolean;
+            silent?: boolean;
+            createdMessageIds?: string[] | null;
+        },
+    ): Promise<boolean>;
     resetStat?(isWizard: boolean): Promise<void>;
+    applyCostuming?(isWizard: boolean, propName: string): Promise<boolean>;
+    populateDefaultSpells?(options?: { notify?: boolean }): Promise<Item[]>;
+    addStartingProp?(slot: "prop1" | "prop2"): Promise<Item | null>;
 }
 
 declare class Item {
     static DEFAULT_ICON: string;
+    static getDefaultArtwork(itemData: Record<string, any>): { img: string };
     id: string;
     _id: string;
+    uuid: string;
+    documentName: string;
     name: string;
     img: string;
     type: string;
@@ -293,14 +341,33 @@ declare class Item {
     delete(operation?: Record<string, any>): Promise<this | undefined>;
 }
 
+declare class JournalEntry {
+    id: string;
+    name: string;
+    sheet: {
+        render(force?: boolean | Record<string, any>): Promise<any>;
+    };
+    static create(
+        data: Record<string, any>,
+        operation?: Record<string, any>,
+    ): Promise<JournalEntry | undefined>;
+}
+
 declare class Roll {
     formula: string;
     total: number;
+    dice: Array<{
+        results: Array<{ result: number; active: boolean }>;
+    }>;
     constructor(formula: string, data?: Record<string, any>, options?: Record<string, any>);
     evaluate(options?: Record<string, any>): Promise<this>;
 }
 
 declare class ChatMessage {
+    id: string;
+    getFlag(scope: string, key: string): any;
+    canUserModify(user: UserDocumentLike, action: string): boolean;
+    delete(operation?: Record<string, any>): Promise<this | undefined>;
     static getSpeaker(options?: {
         scene?: any;
         actor?: Actor;
@@ -315,6 +382,15 @@ declare class ChatMessage {
 
 declare class RollTable {
     name: string;
+    roll(options?: Record<string, any>): Promise<{
+        roll: Roll;
+        results: Array<{
+            id: string;
+            name?: string;
+            description?: string;
+            range: [number, number];
+        }>;
+    }>;
     static create(
         data: Record<string, any> | Array<Record<string, any>>,
         operation?: Record<string, any>,
@@ -327,6 +403,18 @@ declare class RollTable {
 
 declare const Hooks: {
     once(hook: string, fn: (...args: any[]) => any): number;
+    on(
+        hook: "renderChatMessageHTML",
+        fn: (message: ChatMessage, html: HTMLElement) => any,
+    ): number;
+    on(
+        hook: "createChatMessage",
+        fn: (message: ChatMessage, options: Record<string, any>, userId: string) => any,
+    ): number;
+    on(
+        hook: "deleteChatMessage",
+        fn: (message: ChatMessage, options: Record<string, any>, userId: string) => any,
+    ): number;
     on(hook: string, fn: (...args: any[]) => any): number;
 };
 
@@ -365,9 +453,10 @@ declare const CONST: {
 
 declare const game: {
     version: string;
-    user: {
-        id: string;
-        isGM: boolean;
+    user: UserDocumentLike;
+    users: {
+        activeGM: UserDocumentLike | null;
+        filter(predicate: (user: UserDocumentLike) => boolean): UserDocumentLike[];
     };
     i18n: {
         localize(key: string): string;
@@ -375,6 +464,19 @@ declare const game: {
     };
     actors: {
         get(id: string): DefinitelyWizardsActorLike | undefined;
+        filter(predicate: (actor: DefinitelyWizardsActorLike) => boolean): DefinitelyWizardsActorLike[];
+    };
+    scenes?: {
+        active?: SceneLike;
+        current?: SceneLike;
+    };
+    messages: {
+        get(id: string): ChatMessage | undefined;
+        find(predicate: (message: ChatMessage) => boolean): ChatMessage | undefined;
+        some(predicate: (message: ChatMessage) => boolean): boolean;
+    };
+    packs: {
+        get(name: string): { getDocuments(): Promise<any[]> } | undefined;
     };
     tables: {
         contents: RollTable[];
@@ -383,11 +485,70 @@ declare const game: {
     collections: {
         get(name: string): { contents: any[] };
     };
+    definitelyWizards?: {
+        generatePracticalExam: () => Promise<JournalEntry | ChatMessage | null>;
+    };
 };
 
+declare const ui: {
+    notifications: {
+        info(message: string): void;
+        warn(message: string): void;
+        error(message: string): void;
+    };
+    chat: {
+        element: HTMLElement | null;
+    };
+};
+
+declare const canvas: {
+    tokens?: {
+        controlled: Array<{ actor?: DefinitelyWizardsActorLike | null }>;
+        placeables: Array<{ actor?: DefinitelyWizardsActorLike | null }>;
+    };
+};
+
+interface UserDocumentLike {
+    id: string;
+    isGM: boolean;
+    isSelf: boolean;
+    character: DefinitelyWizardsActorLike | null;
+}
+
+interface TokenDocumentLike {
+    actor?: DefinitelyWizardsActorLike | null;
+    parent?: SceneLike | null;
+}
+
+interface SceneLike {
+    id: string;
+    active?: boolean;
+    tokens: Iterable<TokenDocumentLike> & {
+        contents?: TokenDocumentLike[];
+    };
+}
+
+interface RollSkillOptions {
+    isWizardRoll?: boolean;
+    formula?: string;
+    spell?: Item | null;
+    customSpellName?: string;
+}
+
 interface DefinitelyWizardsActorLike extends Actor {
-    updateStat(isWizard: boolean, offset: number): Promise<void>;
+    updateStat(
+        isWizard: boolean,
+        offset: number,
+        options?: {
+            suppressBothLockedAlert?: boolean;
+            silent?: boolean;
+            createdMessageIds?: string[] | null;
+        },
+    ): Promise<boolean>;
     resetStat(isWizard: boolean): Promise<void>;
+    applyCostuming(isWizard: boolean, propName: string): Promise<boolean>;
+    populateDefaultSpells(options?: { notify?: boolean }): Promise<Item[]>;
+    addStartingProp(slot: "prop1" | "prop2"): Promise<Item | null>;
 }
 
 declare const Handlebars: {

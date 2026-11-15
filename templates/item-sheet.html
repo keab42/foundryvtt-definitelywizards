@@ -1,12 +1,12 @@
-<div class="sheet-panel">
+<div class="dw-sheet-panel">
     <header class="sheet-header">
-        <img src="{{item.img}}" data-action="editImage" data-field="img" title="{{item.name}}" height="64" width="64" />
-        <h1><input name="name" type="text" value="{{item.name}}" placeholder="{{localize 'DW.ItemName'}}" /></h1>
+        <img src="{{item.img}}" {{#if editable}}data-action="editImage" data-field="img"{{/if}} title="{{item.name}}" height="64" width="64" />
+        <h1><input name="name" type="text" value="{{item.name}}" placeholder="{{localize 'DW.ItemName'}}" {{#unless editable}}disabled{{/unless}} /></h1>
     </header>
-    <div id="bio-panel">
+    <div class="dw-bio-panel">
         <h2>{{localize 'DW.ItemDescription'}}</h2>
         {{#if editable}}
-        <prose-mirror name="system.description" value="{{source.system.description}}" toggled="true" collaborate="false">
+        <prose-mirror name="system.description" value="{{source.system.description}}" data-document-uuid="{{item.uuid}}" toggled>
             {{{enrichedDescription}}}
         </prose-mirror>
         {{else}}

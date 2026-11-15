@@ -1,0 +1,89 @@
+{
+  "name": "MonsterFactoryTrait",
+  "sort": 100001,
+  "img": "icons/svg/d20-black.svg",
+  "description": "Roll for a creature trait in The Monster Factory",
+  "results": [
+    {
+      "type": "text",
+      "weight": 1,
+      "range": [1, 1],
+      "drawn": false,
+      "_id": "mftR1Flying11111",
+      "name": "",
+      "description": "<p>Flying</p>",
+      "img": "icons/svg/d20-black.svg",
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "type": "text",
+      "weight": 1,
+      "range": [2, 2],
+      "drawn": false,
+      "_id": "mftR2Poisonous22",
+      "name": "",
+      "description": "<p>Poisonous</p>",
+      "img": "icons/svg/d20-black.svg",
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "type": "text",
+      "weight": 1,
+      "range": [3, 3],
+      "drawn": false,
+      "_id": "mftR3Electrified",
+      "name": "",
+      "description": "<p>Electrified</p>",
+      "img": "icons/svg/d20-black.svg",
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "type": "text",
+      "weight": 1,
+      "range": [4, 4],
+      "drawn": false,
+      "_id": "mftR4Expanding44",
+      "name": "",
+      "description": "<p>Expanding</p>",
+      "img": "icons/svg/d20-black.svg",
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "type": "text",
+      "weight": 1,
+      "range": [5, 5],
+      "drawn": false,
+      "_id": "mftR5Hypnotizing",
+      "name": "",
+      "description": "<p>Hypnotizing</p>",
+      "img": "icons/svg/d20-black.svg",
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "type": "text",
+      "weight": 1,
+      "range": [6, 6],
+      "drawn": false,
+      "_id": "mftR6Invisible66",
+      "name": "",
+      "description": "<p>Invisible</p>",
+      "img": "icons/svg/d20-black.svg",
+      "documentUuid": null,
+      "flags": {}
+    }
+  ],
+  "formula": "1d6",
+  "replacement": true,
+  "displayRoll": true,
+  "flags": {},
+  "_stats": {
+    "systemId": "definitely-wizards",
+    "systemVersion": "2.0.0",
+    "coreVersion": "14"
+  }
+}

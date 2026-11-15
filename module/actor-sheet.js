@@ -1,3 +1,6 @@
+import { DEFAULT_WIZARD_SPELL_NAMES } from "./data-models.js";
+import * as Dice from "./dice.js";
+
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 const { ActorSheetV2 } = foundry.applications.sheets;
 
@@ -6,17 +9,53 @@ const propItemType = "Prop";
 const spellItemType = "Spell";
 
 /**
+ * Resolve description and inventory status for a starting prop slot (`prop1` or `prop2`).
+ * @param {Actor} actor
+ * @param {"prop1" | "prop2"} slot
+ * @returns {{ description: string, inInventory: boolean, canAdd: boolean }}
+ */
+function getStartingPropStatus(actor, slot) {
+    const propGroup = slot === "prop1" ? "props1" : "props2";
+    const customField = slot === "prop1" ? "customProp1" : "customProp2";
+    const key = actor.system[slot];
+
+    if (!key || key === "none") {
+        return { description: "", inInventory: false, canAdd: false };
+    }
+
+    if (key === "custom") {
+        const customName = String(actor.system[customField] ?? "").trim();
+        const normalized = customName.toLowerCase();
+        const inInventory =
+            Boolean(normalized) &&
+            actor.items.some(
+                (item) =>
+                    item.type === propItemType && item.name.trim().toLowerCase() === normalized,
+            );
+        return { description: "", inInventory, canAdd: Boolean(normalized) };
+    }
+
+    const configEntry = CONFIG.DEFINITELY_WIZARDS?.[propGroup]?.[key];
+    const targetName = (configEntry?.itemName || configEntry?.label || key).trim().toLowerCase();
+    const description = configEntry?.description ? game.i18n.localize(configEntry.description) : "";
+    const inInventory = actor.items.some(
+        (item) => item.type === propItemType && item.name.trim().toLowerCase() === targetName,
+    );
+    return { description, inInventory, canAdd: true };
+}
+
+/**
  * Character sheet for the Definitely Wizards system using ApplicationV2.
  */
 export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(ActorSheetV2) {
     static DEFAULT_OPTIONS = {
         classes: ["definitelywizards", "sheet", "actor", "theme-light"],
         position: {
-            width: 750,
+            width: 860,
             height: 625,
         },
         window: {
-            resizable: false,
+            resizable: true,
         },
         form: {
             submitOnChange: true,
@@ -28,6 +67,11 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
             statReset: DefinitelyWizardsActorSheet._onStatReset,
             statRoll: DefinitelyWizardsActorSheet._onStatRoll,
             attributeRoll: DefinitelyWizardsActorSheet._onAttributeRoll,
+            addStartingProp: DefinitelyWizardsActorSheet._onAddStartingProp,
+            addDefaultSpells: DefinitelyWizardsActorSheet._onAddDefaultSpells,
+            propCostuming: DefinitelyWizardsActorSheet._onPropCostuming,
+            castSpell: DefinitelyWizardsActorSheet._onCastSpell,
+            castWildSpell: DefinitelyWizardsActorSheet._onCastWildSpell,
             addItem: DefinitelyWizardsActorSheet._onAddItem,
             editItem: DefinitelyWizardsActorSheet._onEditItem,
             deleteItem: DefinitelyWizardsActorSheet._onDeleteItem,
@@ -38,7 +82,7 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
     static PARTS = {
         form: {
             template: "systems/definitely-wizards/templates/actor-sheet.html",
-            scrollable: [".dw-prop-list", ".dw-item-list", ".dw-spell-list"],
+            scrollable: [".sheet-body", ".dw-prop-list", ".dw-item-list", ".dw-spells-scroll"],
         },
     };
 
@@ -68,13 +112,59 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
         context.config = CONFIG.DEFINITELY_WIZARDS;
         context.tabs = this._prepareTabs("primary");
 
-        context.isWizardHigh = Number(this.actor.system.stats.wizard) >= 6;
-        context.isWildHigh = Number(this.actor.system.stats.wild) >= 6;
+        const wizardVal = Number(this.actor.system.stats.wizard);
+        const wildVal = Number(this.actor.system.stats.wild);
+        context.isWizardHigh = wizardVal >= 6;
+        context.isWildHigh = wildVal >= 6;
+        if (wildVal >= 7) {
+            const arrestedMsg = game.i18n.localize("DW.AlreadyArrestedWarning");
+            context.wizardRollTooltip = arrestedMsg;
+            context.wizardWitRollTooltip = arrestedMsg;
+            context.wildRollTooltip = arrestedMsg;
+            context.wildWitRollTooltip = arrestedMsg;
+        } else if (wizardVal >= 6 && wildVal >= 6) {
+            const bothLockedMsg = game.i18n.localize("DW.BothStatsLockedWarning");
+            context.wizardRollTooltip = bothLockedMsg;
+            context.wizardWitRollTooltip = bothLockedMsg;
+            context.wildRollTooltip = bothLockedMsg;
+            context.wildWitRollTooltip = bothLockedMsg;
+        } else {
+            context.wizardRollTooltip = context.isWizardHigh
+                ? game.i18n.localize("DW.WizardLockedWarning")
+                : game.i18n.localize("DW.WizardRollTooltip");
+            context.wizardWitRollTooltip = context.isWizardHigh
+                ? game.i18n.localize("DW.WizardLockedWarning")
+                : game.i18n.localize("DW.WizardRollWithWitTooltip");
+            context.wildRollTooltip = context.isWildHigh
+                ? game.i18n.localize("DW.WildLockedWarning")
+                : game.i18n.localize("DW.WildRollTooltip");
+            context.wildWitRollTooltip = context.isWildHigh
+                ? game.i18n.localize("DW.WildLockedWarning")
+                : game.i18n.localize("DW.WildRollWithWitTooltip");
+        }
         context.showCustomClass = this.actor.system.playerClass === "custom";
         context.showClassDescription =
             Boolean(this.actor.system.playerClass) && this.actor.system.playerClass !== "none";
         context.showCustomProp1 = this.actor.system.prop1 === "custom";
         context.showCustomProp2 = this.actor.system.prop2 === "custom";
+
+        const prop1Status = getStartingPropStatus(this.actor, "prop1");
+        const prop2Status = getStartingPropStatus(this.actor, "prop2");
+        context.prop1Description = prop1Status.description;
+        context.prop1InInventory = prop1Status.inInventory;
+        context.canAddProp1 = prop1Status.canAdd;
+        context.prop2Description = prop2Status.description;
+        context.prop2InInventory = prop2Status.inInventory;
+        context.canAddProp2 = prop2Status.canAdd;
+
+        const ownedSpellNames = new Set(
+            this.actor.items
+                .filter((item) => item.type === spellItemType)
+                .map((item) => item.name.trim().toLowerCase()),
+        );
+        context.hasMissingDefaultSpells = DEFAULT_WIZARD_SPELL_NAMES.some(
+            (name) => !ownedSpellNames.has(name),
+        );
 
         context.enrichedBiography = await TextEditor.implementation.enrichHTML(
             this.actor.system.biography ?? "",
@@ -145,7 +235,7 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
      * @returns {boolean}
      */
     static _isWizardTarget(target) {
-        return Boolean(target.closest("#stat-wizard"));
+        return Boolean(target.closest(".dw-stat-wizard"));
     }
 
     /**
@@ -184,38 +274,79 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
      * @param {HTMLElement} target
      */
     static async _onStatRoll(_event, target) {
-        const template = "systems/definitely-wizards/templates/chat/skill-roll-chat.hbs";
         const isWizardRoll = DefinitelyWizardsActorSheet._isWizardTarget(target);
-        const currentValue = isWizardRoll
-            ? Number(this.actor.system.stats.wizard)
-            : Number(this.actor.system.stats.wild);
+        const formula = target.dataset.roll ?? "1d6";
+        await Dice.rollSkill(this.actor, { isWizardRoll, formula });
+    }
+
+    /**
+     * Add Prop 1 or Prop 2 from Attributes into the actor's Props inventory.
+     * @this {DefinitelyWizardsActorSheet}
+     * @param {PointerEvent} _event
+     * @param {HTMLElement} target
+     */
+    static async _onAddStartingProp(_event, target) {
+        const slot = target.dataset.propSlot === "prop2" ? "prop2" : "prop1";
+        await this.actor.addStartingProp?.(slot);
+    }
+
+    /**
+     * Populate any missing standard low-grade Wizard spells on the actor.
+     * @this {DefinitelyWizardsActorSheet}
+     */
+    static async _onAddDefaultSpells() {
+        await this.actor.populateDefaultSpells?.({ notify: true });
+    }
+
+    /**
+     * Apply Costuming (+1 Wizard or -1 Wild) directly from a Prop row on the sheet.
+     * @this {DefinitelyWizardsActorSheet}
+     * @param {PointerEvent} _event
+     * @param {HTMLElement} target
+     */
+    static async _onPropCostuming(_event, target) {
+        const row = /** @type {HTMLElement | null} */ (target.closest("[data-item-id]"));
+        const itemId = row?.dataset.itemId;
+        const item = itemId ? this.actor.items.get(itemId) : null;
+        if (!item) return;
+
+        const isWizard = target.dataset.stat === "wizard";
+        await this.actor.applyCostuming?.(isWizard, item.name);
+    }
+
+    /**
+     * Cast a Wizard spell directly from the Spells tab (1d6 or 2d6kl Wit Bonus).
+     * @this {DefinitelyWizardsActorSheet}
+     * @param {PointerEvent} _event
+     * @param {HTMLElement} target
+     */
+    static async _onCastSpell(_event, target) {
+        const row = /** @type {HTMLElement | null} */ (target.closest("[data-item-id]"));
+        const itemId = row?.dataset.itemId;
+        const spell = itemId ? this.actor.items.get(itemId) : null;
+        if (!spell) return;
 
         const formula = target.dataset.roll ?? "1d6";
-        const roll = new Roll(formula, this.actor.getRollData());
-        await roll.evaluate();
+        await Dice.rollSkill(this.actor, { isWizardRoll: true, formula, spell });
+    }
 
-        const isSuccess = roll.total <= currentValue;
-        const templateData = {
-            isWizardRoll,
-            isSuccess,
-            diceFormula: roll.formula,
-            diceTotal: roll.total,
-            owner: this.actor.id,
-        };
-
-        if (isSuccess && isWizardRoll) {
-            await this.actor.updateStat?.(isWizardRoll, 1);
-        }
-
-        const rollMessage = {
-            user: game.user.id,
-            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-            content: await foundry.applications.handlebars.renderTemplate(template, templateData),
-            rolls: [roll],
-            sound: CONFIG.sounds.dice,
-        };
-
-        await ChatMessage.create(rollMessage);
+    /**
+     * Cast an improvised Wild spell from the Spells tab (1d6 or 2d6kl Wit Bonus).
+     * @this {DefinitelyWizardsActorSheet}
+     * @param {PointerEvent} _event
+     * @param {HTMLElement} target
+     */
+    static async _onCastWildSpell(_event, target) {
+        const noteInput = /** @type {HTMLInputElement | null} */ (
+            this.element?.querySelector(".dw-wild-spell-note")
+        );
+        const customSpellName = noteInput?.value?.trim() || game.i18n.localize("DW.WildSpellLabel");
+        const formula = target.dataset.roll ?? "1d6";
+        await Dice.rollSkill(this.actor, {
+            isWizardRoll: false,
+            formula,
+            customSpellName,
+        });
     }
 
     /**
@@ -235,7 +366,8 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
         const select = /** @type {HTMLSelectElement | null} */ (parent.querySelector("select"));
         if (!select) return;
 
-        const label = labelEl?.textContent ?? "";
+        const rawLabel = labelEl?.textContent?.trim() ?? "";
+        const label = rawLabel || game.i18n.localize("DW.AttributeRollDefaultLabel");
         const attributeName = select.name;
         const option = select.options[roll.total];
         if (!option) return;
@@ -252,10 +384,15 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
 
         await this.actor.update(updateData);
 
+        const safeTitle = foundry.utils.escapeHTML(
+            game.i18n.format("DW.AttributeRollTitle", { label }),
+        );
+        const safeOption = foundry.utils.escapeHTML(option.textContent ?? "");
+
         const rollMessage = {
             user: game.user.id,
             speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-            content: `<div class="definitelywizards chat-card"><h2>${label} Roll</h2><h3>${option.textContent}</h3></div>`,
+            content: `<div class="definitelywizards chat-card"><h2>${safeTitle}</h2><h3>${safeOption}</h3></div>`,
             rolls: [roll],
             sound: CONFIG.sounds.dice,
         };
@@ -270,12 +407,22 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
      */
     static async _onAddItem(_event, target) {
         const itemType = target.dataset.itemType ?? "";
-        if (itemType.length > 0) {
-            const created = await this.actor.createEmbeddedDocuments("Item", [
-                { type: itemType, name: game.i18n.localize("DW.NewItemName") },
-            ]);
-            await created[0]?.sheet.render(true);
-        }
+        if (itemType.length === 0) return;
+
+        const defaultNameKey =
+            itemType === propItemType
+                ? "DW.NewPropName"
+                : itemType === spellItemType
+                  ? "DW.NewSpellName"
+                  : "DW.NewItemName";
+
+        const created = await this.actor.createEmbeddedDocuments("Item", [
+            {
+                type: itemType,
+                name: game.i18n.localize(defaultNameKey),
+            },
+        ]);
+        await created[0]?.sheet.render(true);
     }
 
     /**
@@ -331,15 +478,33 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
         const item = this.actor.items.get(itemID);
         if (!item) return;
 
+        const safeName = foundry.utils.escapeHTML(item.name);
+        const safeImg = foundry.utils.escapeHTML(item.img ?? "");
+        const safeActorUuid = foundry.utils.escapeHTML(this.actor.uuid);
+
+        let costumingButtons = "";
+        if (item.type === propItemType) {
+            costumingButtons = `
+                <div class="card-buttons">
+                    <button type="button" class="propCostumingChat" data-actor-uuid="${safeActorUuid}" data-stat="wizard" data-prop-name="${safeName}">
+                        ${game.i18n.localize("DW.CostumingWizardButton")}
+                    </button>
+                    <button type="button" class="propCostumingChat" data-actor-uuid="${safeActorUuid}" data-stat="wild" data-prop-name="${safeName}">
+                        ${game.i18n.localize("DW.CostumingWildButton")}
+                    </button>
+                </div>`;
+        }
+
         const messageData = {
             speaker: ChatMessage.getSpeaker({ actor: this.actor }),
             content: `
                 <div class="definitelywizards chat-card">
                     <div class="chatItem flexrow">
-                        <div class="item-image" tabindex="0" aria-label="${item.name}" style="background-image: url('${item.img}')"></div>
-                        <h4>${item.name}</h4>
+                        <div class="item-image" tabindex="0" aria-label="${safeName}" style="background-image: url('${safeImg}')"></div>
+                        <h4>${safeName}</h4>
                     </div>
                     <div>${item.system.description ?? ""}</div>
+                    ${costumingButtons}
                 </div>`,
         };
 

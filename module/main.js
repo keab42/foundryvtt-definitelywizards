@@ -6,6 +6,8 @@ import {
     DEFINITELY_WIZARDS,
     DefinitelyWizardsItemDataModel,
 } from "./data-models.js";
+import { generatePracticalExam } from "./exam-generator.js";
+import { DefinitelyWizardsItem } from "./item.js";
 import { DefinitelyWizardsItemSheet } from "./item-sheet.js";
 
 Hooks.once("init", async () => {
@@ -13,10 +15,15 @@ Hooks.once("init", async () => {
 
     CONFIG.DEFINITELY_WIZARDS = DEFINITELY_WIZARDS;
     CONFIG.Actor.documentClass = DefinitelyWizardsActor;
+    CONFIG.Item.documentClass = DefinitelyWizardsItem;
     CONFIG.Actor.dataModels.character = CharacterDataModel;
     CONFIG.Item.dataModels.Prop = DefinitelyWizardsItemDataModel;
     CONFIG.Item.dataModels.Spell = DefinitelyWizardsItemDataModel;
     CONFIG.Item.dataModels.MiscItem = DefinitelyWizardsItemDataModel;
+
+    game.definitelyWizards = {
+        generatePracticalExam,
+    };
 
     const { DocumentSheetConfig } = foundry.applications.apps;
     DocumentSheetConfig.unregisterSheet(Actor, "core", foundry.appv1.sheets.ActorSheet);
@@ -30,17 +37,10 @@ Hooks.once("init", async () => {
         label: "Definitely Wizards Item Sheet (Default)",
         makeDefault: true,
     });
-
-    Handlebars.registerHelper("removeProperty", (obj, property) => {
-        delete obj[property];
-        return obj;
-    });
-
-    Handlebars.registerHelper("formatHTMLMessage", (str) => new Handlebars.SafeString(str ?? ""));
 });
 
 Hooks.once("ready", async () => {
-    if (!game.user.isGM) return;
+    if (!game.users.activeGM?.isSelf) return;
 
     const existingRollTables = new Set(game.tables.contents.map((doc) => doc.name));
     const rollTablesToAdd = [];
@@ -54,6 +54,10 @@ Hooks.once("ready", async () => {
         Surprise: "systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-surprise.json",
         FinalTest:
             "systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-final-test.json",
+        MonsterFactoryCreature:
+            "systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-monster-factory-creature.json",
+        MonsterFactoryTrait:
+            "systems/definitely-wizards/resources/roll-tables/fvtt-RollTable-monster-factory-trait.json",
     };
 
     for (const [name, url] of Object.entries(rollTables)) {
@@ -68,4 +72,6 @@ Hooks.once("ready", async () => {
     }
 });
 
-Hooks.on("renderChatMessageHTML", (_message, html) => Chat.addChatListeners(html));
+Hooks.on("renderChatMessageHTML", (message, html) => Chat.addChatListeners(message, html));
+Hooks.on("createChatMessage", (message) => Chat.onCreateChatMessage(message));
+Hooks.on("deleteChatMessage", (message) => Chat.onDeleteChatMessage(message));

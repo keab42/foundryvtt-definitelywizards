@@ -1,2 +1,6 @@
 [tools]
 node = "24"
+
+[tasks.serve]
+description = "Start Foundry VTT v14 server at http://localhost:30000"
+run = "node ~/.local/share/foundryvtt-app/main.mjs --dataPath=$HOME/.local/share/FoundryVTT --noupnp"

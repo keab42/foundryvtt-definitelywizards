@@ -2,7 +2,7 @@
   "id": "definitely-wizards",
   "title": "Definitely Wizards",
   "description": "A TTRPG about not being a wizard",
-  "version": "1.5.0",
+  "version": "2.0.0",
   "compatibility": {
     "minimum": "14",
     "verified": "14"
@@ -14,6 +14,11 @@
     },
     {
       "name": "May Keable",
+      "flags": {}
+    },
+    {
+      "name": "ssandif",
+      "url": "https://github.com/ssandif",
       "flags": {}
     }
   ],
@@ -61,6 +66,18 @@
         "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
       }
+    },
+    {
+      "name": "macros",
+      "label": "GM Helpers",
+      "path": "packs/definitely-wizards-macros",
+      "type": "Macro",
+      "system": "definitely-wizards",
+      "flags": {},
+      "ownership": {
+        "PLAYER": "NONE",
+        "ASSISTANT": "OWNER"
+      }
     }
   ],
   "languages": [
@@ -72,7 +89,7 @@
     }
   ],
   "url": "https://github.com/keab42/foundryvtt-definitelywizards",
-  "manifest": "https://raw.githubusercontent.com/keab42/foundryvtt-definitelywizards/master/system.json",
-  "download": "https://github.com/keab42/foundryvtt-definitelywizards/releases/download/v1.5.0/definitely-wizards.zip",
+  "manifest": "https://github.com/keab42/foundryvtt-definitelywizards/releases/latest/download/system.json",
+  "download": "https://github.com/keab42/foundryvtt-definitelywizards/releases/download/v2.0.0/definitely-wizards.zip",
   "license": "LICENSE.txt"
 }

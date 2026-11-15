@@ -22,30 +22,130 @@
     src: url("../resources/fonts/Montserrat/Montserrat-Medium.ttf");
 }
 
-.definitelywizards {
+.definitelywizards.application {
+    --background: var(--dw-color-bright);
+    background: var(--dw-color-bright);
+}
+
+.definitelywizards.sheet.actor {
+    min-width: 660px;
+    min-height: 460px;
+}
+
+.definitelywizards.sheet.item {
+    min-width: 400px;
+    min-height: 300px;
+}
+
+.definitelywizards.chat-card {
+    background: var(--dw-color-light);
+    padding: 6px;
+
+    .card-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 6px;
+    }
+
+    button:not(.icon):disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    .dw-cast-spell-header {
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid var(--dw-color-dark-10);
+    }
+
+    .dw-cast-spell-description {
+        font-size: 0.85em;
+        margin-bottom: 6px;
+    }
+
+    .dw-wit-bonus-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 4px 0 6px;
+        padding: 3px 6px;
+        background: var(--dw-color-dark-10);
+        border-radius: 3px;
+        font-size: 0.85em;
+    }
+
+    .dw-wit-label {
+        font-weight: 600;
+    }
+
+    .dw-dice-faces {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .dw-die-face {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border: 1px solid var(--dw-color-dark);
+        background: var(--dw-color-light-text);
+        font-family: var(--dw-font-title);
+        font-size: 0.9em;
+    }
+
+    .dw-die-face.kept {
+        border-width: 2px;
+        background: var(--dw-color-bright);
+        font-weight: 700;
+    }
+
+    .dw-die-face.dropped {
+        opacity: 0.5;
+        text-decoration: line-through;
+    }
+
+    .dw-reset-banner {
+        background: var(--dw-color-dark-10);
+        border-left: 3px solid var(--dw-color-med-dark);
+        padding: 4px 6px;
+        margin: 4px 0;
+    }
+
+    .dw-resolution-status {
+        width: 100%;
+        font-size: 0.8em;
+        font-weight: 600;
+        color: var(--dw-color-med-dark);
+        padding: 2px 4px;
+    }
+}
+
+.definitelywizards .window-content {
+    background: var(--dw-color-light);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    padding: var(--dw-margin);
+    overflow-y: auto;
+}
+
+.definitelywizards .window-content,
+.definitelywizards.chat-card {
     font-family: var(--dw-font-body);
     color: var(--dw-color-text);
-
-    &.application {
-        background: var(--dw-color-bright);
-    }
-
-    &.chat-card {
-        background: var(--dw-color-light);
-        padding: 5px;
-
-        .card-buttons {
-            margin-top: 5px;
-        }
-    }
-
-    .window-content {
-        background: var(--dw-color-light);
-        color: var(--dw-color-text);
-        height: 100%;
-        padding: var(--dw-margin);
-        overflow-y: auto;
-    }
+    color-scheme: light;
+    --color-text-primary: var(--dw-color-text);
+    --color-text-secondary: var(--dw-color-med-dark);
+    --input-background-color: var(--dw-color-light-text);
+    --input-text-color: var(--dw-color-text);
 
     h1,
     h2,
@@ -64,19 +164,27 @@
         border: 1px solid var(--dw-color-text);
         border-radius: 0;
         font-family: var(--dw-font-title);
-        font-size: 1.3em;
-        padding: 0 5px;
+        font-size: 1.25em;
+        line-height: 1.2;
+        padding: 2px 6px;
         color: var(--dw-color-text);
         background: var(--dw-color-light-text);
     }
 
     select,
-    button,
     textarea {
         font-family: var(--dw-font-body);
         border-radius: 0;
         border: 1px solid var(--dw-color-dark);
         color: var(--dw-color-text);
+        background: var(--dw-color-light-text);
+    }
+
+    button:not(.icon) {
+        border-radius: 0;
+        border: 1px solid var(--dw-color-dark);
+        color: var(--dw-color-text);
+        background: var(--dw-color-medium);
     }
 
     select:focus,
@@ -90,8 +198,34 @@
         text-shadow: 0 0 8px var(--dw-color-bright);
     }
 
-    button:hover {
+    button:not(.icon):hover {
         box-shadow: 0 0 10px var(--dw-color-bright);
+    }
+
+    prose-mirror {
+        --min-height: 150px;
+        --menu-height: 32px;
+        --color-control-hover: var(--dw-color-bright);
+        --menu-background: var(--dw-color-dark-10);
+        --dropdown-background: var(--dw-color-medium);
+        --dropdown-border: var(--dw-color-dark);
+        --button-text-color: var(--dw-color-text);
+        --button-background-color: transparent;
+        --button-hover-background-color: var(--dw-color-bright);
+        --button-hover-text-color: var(--dw-color-text);
+        min-height: 150px;
+    }
+
+    prose-mirror button.toggle {
+        background: var(--dw-color-light);
+        color: var(--dw-color-dark);
+        border: 1px solid var(--dw-color-dark);
+        z-index: 2;
+    }
+
+    prose-mirror button.toggle:hover {
+        background: var(--dw-color-bright);
+        color: var(--dw-color-dark);
     }
 
     .grid-columns {
@@ -125,6 +259,16 @@
         cursor: pointer;
     }
 
+    .stat-locked {
+        opacity: 0.35;
+        filter: grayscale(1);
+        cursor: not-allowed;
+    }
+
+    .stat-locked.expand:hover {
+        transform: none;
+    }
+
     .error-red {
         color: darkred;
     }
@@ -145,348 +289,571 @@
         background-position: 50% 0;
         border: none;
     }
+}
 
-    &.item .sheet-header {
+.definitelywizards.item .window-content .sheet-header {
+    display: flex;
+    align-items: center;
+    gap: var(--dw-margin);
+    margin-bottom: var(--dw-margin);
+
+    > img {
+        height: 64px;
+        width: 64px;
+        object-fit: cover;
+        background-color: var(--dw-color-dark-10);
+    }
+
+    > img[data-action="editImage"] {
+        cursor: pointer;
+    }
+
+    > h1 {
+        flex: 1;
+        font-size: 1.4rem;
+        line-height: 1.2;
+        margin: 0;
+
+        input[type="text"] {
+            width: 100%;
+            height: auto;
+            min-height: 38px;
+            font-size: 1.4rem;
+            line-height: 1.2;
+            padding: 4px 8px;
+            margin: 0;
+        }
+    }
+}
+
+.definitelywizards .window-content .dw-sheet-panel {
+    display: grid;
+    grid-template-rows: max-content max-content 1fr;
+    flex: 1;
+    min-height: 0;
+
+    nav.sheet-tabs {
         display: flex;
-        align-items: center;
-        gap: var(--dw-margin);
-        margin-bottom: var(--dw-margin);
+        flex-direction: row;
+        border-top: none;
+        border-bottom: 1px solid var(--dw-color-text);
+        margin: 14px 0 0 0;
 
-        img {
-            height: 64px;
-            width: 64px;
-            object-fit: cover;
-            background-color: var(--dw-color-dark-10);
+        a {
+            border: 1px solid var(--dw-color-dark);
+            border-radius: 10px 10px 0 0;
+            flex: 1;
+            font-family: var(--dw-font-title);
+            color: var(--dw-color-text);
+            text-align: center;
+            padding: 4px 8px;
             cursor: pointer;
         }
 
-        h1 {
-            flex: 1;
-
-            input {
-                width: 100%;
-            }
+        a.active {
+            background-color: var(--dw-color-bright);
+            color: var(--dw-color-text);
+            text-shadow: 0 0 10px var(--dw-color-bright);
         }
     }
 
-    .sheet-panel {
-        display: grid;
-        grid-template-rows: max-content max-content 1fr;
+    .sheet-body {
+        border: 1px solid var(--dw-color-text);
+        padding: 5px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: auto;
 
-        nav.sheet-tabs {
+        .tab.active {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .editor {
+            min-height: 120px;
+            height: 100%;
+            overflow-y: auto;
+        }
+    }
+
+    .dw-stat-panel {
+        height: auto;
+        display: grid;
+        grid-template-columns: 100px 1fr 1fr;
+        grid-template-rows: auto 1fr;
+        grid-template-areas:
+            "portrait name name"
+            "portrait wizard wild";
+        gap: var(--dw-margin);
+
+        .profile-img {
+            grid-area: portrait;
+            height: 100px;
+            width: 100px;
+            object-fit: cover;
+            background-color: var(--dw-color-dark-10);
+        }
+
+        .profile-img[data-action="editImage"] {
+            cursor: pointer;
+        }
+
+        .char-name {
+            grid-area: name;
+            border-bottom: 0;
+            font-size: 1.4rem;
+            line-height: 1.2;
+            margin: 0;
+
+            input[type="text"] {
+                width: 100%;
+                height: auto;
+                min-height: 38px;
+                font-size: 1.4rem;
+                line-height: 1.2;
+                padding: 4px 8px;
+                margin: 0;
+            }
+        }
+
+        .dw-stat-wizard,
+        .dw-stat-wild {
+            gap: 0;
+            margin-top: -10px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: auto 1fr auto;
+            grid-template-areas:
+                "title title title ."
+                "value die dice ."
+                "plus minus reset .";
+            align-items: center;
+        }
+
+        .dw-stat-wizard {
+            grid-area: wizard;
+        }
+
+        .dw-stat-wild {
+            grid-area: wild;
+        }
+
+        .stat-title {
+            grid-area: title;
+        }
+
+        .stat-button {
+            height: 40px;
+            grid-area: icon;
+        }
+
+        .stat-button-plus {
+            height: 25px;
+            grid-area: plus;
+        }
+
+        .stat-button-minus {
+            height: 25px;
+            grid-area: minus;
+        }
+
+        .stat-button-reset {
+            height: 25px;
+            grid-area: reset;
+        }
+
+        .stat-roll-single {
+            height: 35px;
+            grid-area: die;
+        }
+
+        .stat-roll-double {
+            height: 35px;
+            grid-area: dice;
+        }
+
+        .stat-value {
+            font-size: 45px;
+            font-family: var(--dw-font-title);
+            color: var(--dw-color-text);
+            height: 50px;
+            text-align: center;
+            width: 40px;
+            border: 0;
+            background: transparent;
+            grid-area: value;
+        }
+    }
+
+    .dw-attributes-tab {
+        display: grid;
+        grid-template-columns: max-content minmax(240px, 1fr);
+        grid-template-rows: minmax(0, 1fr);
+        flex: 1;
+        min-height: 0;
+        gap: var(--dw-margin);
+    }
+
+    .dw-attributes-panel {
+        margin-right: 0.5rem;
+
+        .dw-attributes {
+            display: grid;
+            gap: var(--dw-margin);
+            margin-top: var(--dw-margin);
+
+            label {
+                grid-area: attr-label;
+            }
+
+            select {
+                grid-area: attr-select;
+                box-sizing: border-box;
+                width: 100%;
+                min-width: 0;
+            }
+
+            img {
+                grid-area: attr-roller;
+            }
+
+            button.add-starting-prop {
+                grid-area: attr-add;
+                box-sizing: border-box;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                width: 100%;
+                height: 28px;
+                min-height: 0;
+                margin: 0;
+                font-size: 0.72rem;
+                line-height: 1.2;
+                padding: 3px 6px;
+                white-space: nowrap;
+            }
+
+            button.add-starting-prop.in-inventory {
+                background: var(--dw-color-light);
+                color: var(--dw-color-med-dark);
+                border-color: var(--dw-color-med-dark);
+            }
+
+            input {
+                grid-area: attr-custom;
+                box-sizing: border-box;
+                width: 100%;
+                min-width: 0;
+            }
+
+            .prop-hint {
+                grid-area: attr-hint;
+                box-sizing: border-box;
+                width: 0;
+                min-width: 100%;
+                margin: 0;
+                font-size: 0.78rem;
+                line-height: 1.25;
+                color: var(--dw-color-med-dark);
+                font-style: italic;
+            }
+        }
+
+        .attribute {
+            align-items: center;
+            display: grid;
+            gap: 4px var(--dw-margin);
+            grid-template-columns: 72px minmax(240px, 260px) 25px 112px;
+            grid-template-areas:
+                "attr-label attr-select attr-roller attr-add"
+                ". attr-custom . ."
+                ". attr-hint attr-hint attr-hint";
+        }
+    }
+
+    .dw-bio-panel {
+        display: grid;
+        grid-template-rows: max-content minmax(0, 1fr);
+        flex: 1;
+        min-height: 0;
+
+        prose-mirror {
+            --min-height: 120px;
+            min-height: 120px;
+            height: 100%;
+        }
+
+        prose-mirror .editor-content {
+            min-height: 0;
+            overflow-y: auto;
+        }
+
+        .editor {
+            min-height: 120px;
+            height: 100%;
+            overflow-y: auto;
+        }
+    }
+
+    .dw-class-description-panel {
+        display: grid;
+        grid-template-rows: max-content minmax(0, 1fr);
+        margin-right: 0.5rem;
+        min-width: 0;
+        min-height: 0;
+
+        prose-mirror {
+            --min-height: 140px;
+            min-height: 140px;
+            height: 100%;
+        }
+
+        prose-mirror .editor-content {
+            min-height: 0;
+            overflow-y: auto;
+        }
+
+        .editor {
+            min-height: 120px;
+            height: 100%;
+            overflow-y: auto;
+        }
+    }
+
+    .dw-middle-panel {
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+        gap: var(--dw-margin);
+        flex: 1;
+        min-height: 0;
+    }
+
+    .dw-items-panel,
+    .dw-props-panel,
+    .dw-spells-panel {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+
+        ol {
+            list-style: none;
+            margin: 0;
+            scrollbar-width: thin;
+            padding: 0 5px;
+        }
+
+        .dw-item-list,
+        .dw-prop-list {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+        }
+
+        .dw-wild-spell-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            margin-bottom: 10px;
+            background: var(--dw-color-dark-10);
+            border: 1px solid var(--dw-color-dark);
+            flex: 0 0 auto;
+
+            .dw-wild-spell-title {
+                flex: 0 0 auto;
+                font-family: var(--dw-font-title);
+                font-size: 1rem;
+                white-space: nowrap;
+            }
+
+            input.dw-wild-spell-note {
+                flex: 1;
+                min-width: 0;
+                font-family: var(--dw-font-body);
+                font-size: 0.85rem;
+                line-height: 1.3;
+                padding: 3px 6px;
+                height: 26px;
+                box-sizing: border-box;
+            }
+
+            .dw-wild-spell-actions {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                flex: 0 0 auto;
+            }
+        }
+
+        .dw-spells-title-row {
             display: flex;
             flex-direction: row;
-            border-top: none;
-            border-bottom: 1px solid var(--dw-color-text);
-            margin: 14px 0 0 0;
-
-            a {
-                border: 1px solid var(--dw-color-dark);
-                border-radius: 10px 10px 0 0;
-                flex: 1;
-                font-family: var(--dw-font-title);
-                text-align: center;
-                padding: 4px 8px;
-                cursor: pointer;
-            }
-
-            a.active {
-                background-color: var(--dw-color-bright);
-                text-shadow: 0 0 10px var(--dw-color-bright);
-            }
-        }
-
-        .sheet-body {
-            border: 1px solid var(--dw-color-text);
-            padding: 5px;
-
-            prose-mirror,
-            .editor {
-                min-height: 150px;
-                max-height: 260px;
-                overflow-y: auto;
-                display: block;
-            }
-        }
-
-        #stat-panel {
-            height: auto;
-            display: grid;
-            grid-template-columns: 100px 1fr 1fr;
-            grid-template-rows: 40px 1fr;
-            grid-template-areas:
-                "portrait name name"
-                "portrait wizard wild";
-            gap: var(--dw-margin);
-
-            .profile-img {
-                grid-area: portrait;
-                height: 100px;
-                width: 100px;
-                object-fit: cover;
-                background-color: var(--dw-color-dark-10);
-                cursor: pointer;
-            }
-
-            .char-name {
-                grid-area: name;
-                border-bottom: 0;
-
-                input {
-                    width: 100%;
-                    height: 100%;
-                    margin: 0;
-                }
-            }
-
-            #stat-wizard,
-            #stat-wild {
-                gap: 0;
-                margin-top: -10px;
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                grid-template-rows: auto 1fr auto;
-                grid-template-areas:
-                    "title title title ."
-                    "value die dice ."
-                    "plus minus reset .";
-                align-items: center;
-            }
-
-            #stat-wizard {
-                grid-area: wizard;
-            }
-
-            #stat-wild {
-                grid-area: wild;
-            }
-
-            .stat-title {
-                grid-area: title;
-            }
-
-            .stat-button {
-                height: 40px;
-                grid-area: icon;
-            }
-
-            .stat-button-plus {
-                height: 25px;
-                grid-area: plus;
-            }
-
-            .stat-button-minus {
-                height: 25px;
-                grid-area: minus;
-            }
-
-            .stat-button-reset {
-                height: 25px;
-                grid-area: reset;
-            }
-
-            .stat-roll-single {
-                height: 35px;
-                grid-area: die;
-            }
-
-            .stat-roll-double {
-                height: 35px;
-                grid-area: dice;
-            }
-
-            .stat-value {
-                font-size: 45px;
-                font-family: var(--dw-font-title);
-                height: 50px;
-                text-align: center;
-                width: 40px;
-                border: 0;
-                background: transparent;
-                grid-area: value;
-            }
-        }
-
-        #attributes-tab {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: auto 1fr;
-        }
-
-        #attributes-panel {
-            margin-right: 0.5rem;
-
-            #attributes {
-                display: grid;
-                gap: var(--dw-margin);
-                margin-top: var(--dw-margin);
-
-                label {
-                    grid-area: attr-label;
-                }
-
-                select {
-                    grid-area: attr-select;
-                }
-
-                img {
-                    grid-area: attr-roller;
-                }
-
-                input {
-                    grid-area: attr-custom;
-                }
-            }
-
-            .attribute {
-                align-items: center;
-                display: grid;
-                gap: var(--dw-margin);
-                grid-template-columns: 72px 200px 1fr;
-                grid-template-areas:
-                    "attr-label attr-select attr-roller"
-                    ". attr-custom .";
-            }
-        }
-
-        #bio-panel {
-            display: grid;
-            grid-template-rows: max-content 1fr;
-
-            prose-mirror,
-            .editor {
-                min-height: 150px;
-                max-height: 260px;
-                overflow-y: auto;
-                display: block;
-            }
-        }
-
-        #class-description-panel {
-            display: grid;
-            grid-template-rows: max-content 1fr;
-            margin-right: 0.5rem;
-
-            prose-mirror.class-description,
-            .class-description {
-                min-height: 50px;
-                max-height: 100px;
-                overflow-y: auto;
-                border: 0;
-                background: transparent;
-                display: block;
-            }
-        }
-
-        #middle-panel {
-            display: grid;
-            grid-template-rows: auto 1fr;
-            grid-template-columns: repeat(2, 1fr);
             justify-content: space-between;
-            flex-wrap: nowrap;
-            height: auto;
-            margin-top: 14px;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 2px solid var(--dw-color-text);
+            margin-bottom: 6px;
+            padding-bottom: 2px;
+            flex: 0 0 auto;
+
+            h2 {
+                flex: 0 0 auto;
+                border-bottom: none;
+            }
         }
 
-        #items-panel,
-        #props-panel,
-        #spells-panel {
-            .dw-item-list,
-            .dw-prop-list {
-                overflow-y: auto;
-                height: 175px;
+        .add-default-spells-btn {
+            flex: 0 0 auto;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            white-space: nowrap;
+        }
+
+        .dw-spells-scroll {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            padding-right: 2px;
+        }
+
+        .dw-spell-list {
+            overflow-y: visible;
+            height: auto;
+        }
+
+        .costuming-btn,
+        .cast-spell-btn {
+            flex: 0 0 auto;
+            font-size: 0.7rem;
+            line-height: 1.1;
+            padding: 2px 6px;
+            white-space: nowrap;
+        }
+
+        .costuming-btn.costuming-wizard {
+            background: var(--dw-color-bright);
+        }
+
+        .add-item,
+        .add-spell,
+        .add-prop,
+        .item-control,
+        .prop-control,
+        .spell-control {
+            flex: 0 0 auto;
+        }
+
+        .add-item,
+        .add-spell,
+        .add-prop {
+            font-size: 0.7rem;
+            align-self: center;
+        }
+
+        .add-item:hover,
+        .add-spell:hover,
+        .add-prop:hover {
+            text-shadow: 2px 2px 4px var(--dw-color-dark);
+            cursor: pointer;
+        }
+
+        .item-roll,
+        .spell-roll,
+        .prop-roll {
+            cursor: pointer;
+        }
+
+        .item-name,
+        .spell-name,
+        .prop-name {
+            margin: 0;
+            overflow: hidden;
+            align-items: center;
+
+            .item-image,
+            .spell-image,
+            .prop-image {
+                flex: 0 0 30px;
+                height: 30px;
+                width: 30px;
+                margin: 5px;
+                background-size: cover;
+                background-position: 50% 0;
+                border: none;
             }
 
-            .dw-spell-list {
-                overflow-y: auto;
-                height: 300px;
+            .item-image {
+                background-color: var(--dw-color-dark-10);
             }
+        }
 
-            .add-item,
-            .add-spell,
-            .add-prop {
-                font-size: 0.7rem;
-                align-self: center;
-            }
-
-            .add-item:hover,
-            .add-spell:hover,
-            .add-prop:hover {
-                text-shadow: 2px 2px 4px var(--dw-color-dark);
-                cursor: pointer;
-            }
-
-            ol {
-                list-style: none;
-                margin: 0;
-                overflow-y: auto;
-                scrollbar-width: thin;
-                padding: 0 5px;
-            }
-
-            .item-roll,
-            .spell-roll,
-            .prop-roll {
-                cursor: pointer;
-            }
+        .items-header,
+        .spells-header,
+        .props-header {
+            border-bottom: 1px solid var(--dw-color-dark);
 
             .item-name,
             .spell-name,
-            .prop-name,
-            .prop-roll {
-                margin: 0;
-                overflow: hidden;
-                align-items: center;
-
-                .item-image,
-                .spell-image,
-                .prop-image {
-                    flex: 0 0 30px;
-                    height: 30px;
-                    width: 30px;
-                    margin: 5px;
-                    background-size: cover;
-                    background-position: 50% 0;
-                    border: none;
-                }
-
-                .item-image {
-                    background-color: var(--dw-color-dark-10);
-                }
+            .prop-name {
+                padding-left: 5px;
+                text-align: left;
+                border-bottom: none;
             }
+        }
 
-            .items-header,
-            .spells-header,
-            .props-header {
-                border-bottom: 1px solid var(--dw-color-dark);
+        .item-description,
+        .spell-description,
+        .prop-description {
+            margin-right: 5px;
+        }
 
-                .item-name,
-                .spell-name,
-                .prop-name {
-                    padding-left: 5px;
-                    text-align: left;
-                    border-bottom: none;
-                }
-            }
+        .item-controls {
+            flex: 0 0 68px;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+        }
 
-            .item-description,
-            .spell-description,
-            .prop-description {
-                margin-right: 5px;
-            }
+        .prop-controls {
+            flex: 0 0 auto;
+            min-width: 135px;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+        }
 
-            .item-controls,
-            .spell-controls,
-            .prop-controls {
-                flex: 0 0 68px;
-                align-items: center;
-            }
+        .spell-controls {
+            flex: 0 0 auto;
+            min-width: 120px;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
         }
     }
+}
 
-    &.item {
-        .sheet-panel {
-            grid-template-rows: max-content 1fr;
-        }
+.definitelywizards.item .window-content .dw-sheet-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+
+    .dw-bio-panel {
+        flex: 1;
+        display: grid;
+        grid-template-rows: max-content minmax(0, 1fr);
+        min-height: 0;
+    }
+
+    .editor {
+        min-height: 120px;
+        height: 100%;
+        overflow-y: auto;
     }
 }

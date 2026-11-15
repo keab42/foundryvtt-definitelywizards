@@ -1,0 +1,89 @@
+{
+  "name": "MonsterFactoryCreature",
+  "sort": 100001,
+  "img": "icons/svg/d20-black.svg",
+  "description": "Roll for a creature in The Monster Factory",
+  "results": [
+    {
+      "type": "text",
+      "weight": 1,
+      "range": [1, 1],
+      "drawn": false,
+      "_id": "mfcR1EyeballMon1",
+      "name": "",
+      "description": "<p>Eyeball monster</p>",
+      "img": "icons/svg/d20-black.svg",
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "type": "text",
+      "weight": 1,
+      "range": [2, 2],
+      "drawn": false,
+      "_id": "mfcR2Minotaur222",
+      "name": "",
+      "description": "<p>Minotaur</p>",
+      "img": "icons/svg/d20-black.svg",
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "type": "text",
+      "weight": 1,
+      "range": [3, 3],
+      "drawn": false,
+      "_id": "mfcR3TRex3333333",
+      "name": "",
+      "description": "<p>T-Rex</p>",
+      "img": "icons/svg/d20-black.svg",
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "type": "text",
+      "weight": 1,
+      "range": [4, 4],
+      "drawn": false,
+      "_id": "mfcR4ZombieHorde",
+      "name": "",
+      "description": "<p>Zombie horde</p>",
+      "img": "icons/svg/d20-black.svg",
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "type": "text",
+      "weight": 1,
+      "range": [5, 5],
+      "drawn": false,
+      "_id": "mfcR5GiantSlime5",
+      "name": "",
+      "description": "<p>Giant slime</p>",
+      "img": "icons/svg/d20-black.svg",
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "type": "text",
+      "weight": 1,
+      "range": [6, 6],
+      "drawn": false,
+      "_id": "mfcR6Lich6666666",
+      "name": "",
+      "description": "<p>Lich</p>",
+      "img": "icons/svg/d20-black.svg",
+      "documentUuid": null,
+      "flags": {}
+    }
+  ],
+  "formula": "1d6",
+  "replacement": true,
+  "displayRoll": true,
+  "flags": {},
+  "_stats": {
+    "systemId": "definitely-wizards",
+    "systemVersion": "2.0.0",
+    "coreVersion": "14"
+  }
+}

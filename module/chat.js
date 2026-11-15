@@ -1,26 +1,553 @@
 import * as Dice from "./dice.js";
 
 /**
- * Attach click listeners to rendered chat message HTML elements.
+ * Find any existing resolution ChatMessage for a given skill-roll ChatMessage ID.
+ * @param {string | undefined} messageId
+ * @param {object} [options]
+ * @param {string} [options.excludeMessageId=""]
+ * @returns {ChatMessage | undefined}
+ */
+function findResolutionMessage(messageId, { excludeMessageId = "" } = {}) {
+    if (!messageId) return undefined;
+    return game.messages.find(
+        (msg) =>
+            msg.id !== excludeMessageId &&
+            msg.getFlag("definitely-wizards", "resolvedMessageId") === messageId,
+    );
+}
+
+/**
+ * Format a localized resolution status label from a resolution message.
+ * @param {ChatMessage} resolutionMessage
+ * @returns {string}
+ */
+function formatResolutionLabel(resolutionMessage) {
+    const type = resolutionMessage.getFlag("definitely-wizards", "resolutionType");
+    const resolverName = resolutionMessage.getFlag("definitely-wizards", "resolverName") ?? "";
+    if (type === "covered") {
+        return game.i18n.format("DW.CoveredStatus", { name: resolverName });
+    }
+    if (type === "disguise-failed") {
+        return game.i18n.localize("DW.DisguiseWildAppliedStatus");
+    }
+    return game.i18n.localize("DW.ConsequencesRolledStatus");
+}
+
+/**
+ * Locate the `.skill-roll` card element within or on a chat message element.
+ * @param {HTMLElement} html
+ * @returns {HTMLElement | null}
+ */
+function findSkillRollCard(html) {
+    if (html.classList?.contains("skill-roll")) return html;
+    return html.querySelector(".skill-roll");
+}
+
+/**
+ * Disable action buttons on a skill-roll card and render its resolution status badge.
+ * @param {HTMLElement} html
+ * @param {ChatMessage} resolutionMessage
+ */
+function applyResolvedState(html, resolutionMessage) {
+    const card = findSkillRollCard(html);
+    if (!card) return;
+
+    for (const btn of card.querySelectorAll(
+        "button.rollConsequences, button.coverRoll, button.addWildDisguiseFail",
+    )) {
+        /** @type {HTMLButtonElement} */ (btn).disabled = true;
+    }
+
+    const buttonsContainer = card.querySelector(".card-buttons");
+    if (!buttonsContainer) return;
+
+    let badge = buttonsContainer.querySelector(".dw-resolution-status");
+    if (!badge) {
+        badge = document.createElement("div");
+        badge.className = "dw-resolution-status";
+        buttonsContainer.appendChild(badge);
+    }
+    badge.textContent = formatResolutionLabel(resolutionMessage);
+}
+
+/**
+ * Re-enable action buttons on a skill-roll card and remove its resolution status badge.
  * @param {HTMLElement} html
  */
-export function addChatListeners(html) {
-    for (const button of html.querySelectorAll("button.rollConsequences")) {
-        button.addEventListener("click", onRollConsequences);
+function clearResolvedState(html) {
+    const card = findSkillRollCard(html);
+    if (!card) return;
+
+    for (const btn of card.querySelectorAll(
+        "button.rollConsequences, button.coverRoll, button.addWildDisguiseFail",
+    )) {
+        /** @type {HTMLButtonElement} */ (btn).disabled = false;
+    }
+
+    card.querySelector(".dw-resolution-status")?.remove();
+}
+
+/**
+ * Restore a clicked action button after cancellation/failure, or sync resolved state if resolved elsewhere.
+ * @param {HTMLElement} card
+ * @param {HTMLButtonElement} button
+ * @param {string | undefined} messageId
+ */
+function restoreOrSyncCard(card, button, messageId) {
+    const existing = findResolutionMessage(messageId);
+    if (existing) {
+        const container = /** @type {HTMLElement} */ (card.closest("[data-message-id]") ?? card);
+        applyResolvedState(container, existing);
+    } else {
+        button.disabled = false;
     }
 }
 
 /**
- * Handle clicking the "Roll for Consequences" button on a failed skill roll card.
+ * Attach click listeners and resolved state to rendered chat message HTML elements.
+ * @param {ChatMessage} message
+ * @param {HTMLElement} html
+ */
+export function addChatListeners(message, html) {
+    const skillCard = findSkillRollCard(html);
+    const costumingButtons = html.querySelectorAll("button.propCostumingChat");
+    const undoCoverButtons = html.querySelectorAll("button.undoCover");
+    if (!skillCard && costumingButtons.length === 0 && undoCoverButtons.length === 0) return;
+
+    if (skillCard) {
+        const resolution = findResolutionMessage(message?.id);
+        if (resolution) {
+            applyResolvedState(html, resolution);
+        }
+
+        for (const button of skillCard.querySelectorAll("button.rollConsequences")) {
+            button.addEventListener("click", (event) => onRollConsequences(event, message));
+        }
+
+        for (const button of skillCard.querySelectorAll("button.coverRoll")) {
+            button.addEventListener("click", (event) => onCoverRoll(event, message));
+        }
+
+        for (const button of skillCard.querySelectorAll("button.addWildDisguiseFail")) {
+            button.addEventListener("click", (event) => onWildDisguiseFail(event, message));
+        }
+    }
+
+    for (const button of costumingButtons) {
+        button.addEventListener("click", onPropCostumingChat);
+    }
+
+    for (const button of undoCoverButtons) {
+        button.addEventListener("click", (event) => onUndoCover(event, message));
+    }
+}
+
+/**
+ * Sync newly created resolution messages back onto the original skill-roll card across all rendered views.
+ * @param {ChatMessage} message
+ */
+export function onCreateChatMessage(message) {
+    const resolvedId = message.getFlag("definitely-wizards", "resolvedMessageId");
+    if (!resolvedId) return;
+
+    const safeId = CSS.escape(String(resolvedId));
+    const elements = document.querySelectorAll(`[data-message-id="${safeId}"]`);
+    for (const el of elements) {
+        applyResolvedState(/** @type {HTMLElement} */ (el), message);
+    }
+}
+
+/**
+ * Re-enable the original skill-roll card's buttons when its resolution message is deleted.
+ * @param {ChatMessage} message
+ */
+export function onDeleteChatMessage(message) {
+    const resolvedId = message.getFlag("definitely-wizards", "resolvedMessageId");
+    if (!resolvedId) return;
+
+    const remainingResolution = findResolutionMessage(resolvedId, {
+        excludeMessageId: message.id,
+    });
+    const safeId = CSS.escape(String(resolvedId));
+    const elements = document.querySelectorAll(`[data-message-id="${safeId}"]`);
+    for (const el of elements) {
+        if (remainingResolution) {
+            applyResolvedState(/** @type {HTMLElement} */ (el), remainingResolution);
+        } else {
+            clearResolvedState(/** @type {HTMLElement} */ (el));
+        }
+    }
+}
+
+/**
+ * Handle clicking "Roll for Consequences" on a failed skill roll card.
+ * @param {Event} event
+ * @param {ChatMessage} message
+ */
+async function onRollConsequences(event, message) {
+    const button = /** @type {HTMLButtonElement | null} */ (event.currentTarget);
+    const card = /** @type {HTMLElement | null} */ (button?.closest(".skill-roll"));
+    if (!button || !card || button.disabled) return;
+
+    button.disabled = true;
+    let resolved = false;
+
+    try {
+        if (findResolutionMessage(message?.id)) {
+            ui.notifications.warn(game.i18n.localize("DW.AlreadyResolvedWarning"));
+            return;
+        }
+
+        const actorRef = card.dataset.actorUuid || card.dataset.ownerId || "";
+        const actor = await Dice.resolveActor(actorRef);
+        if (!actor) return;
+
+        if (!actor.isOwner && !game.user.isGM) {
+            ui.notifications.warn(game.i18n.localize("DW.OnlyOwnerConsequences"));
+            return;
+        }
+
+        if (findResolutionMessage(message?.id)) {
+            ui.notifications.warn(game.i18n.localize("DW.AlreadyResolvedWarning"));
+            return;
+        }
+
+        const isWizardRoll = card.dataset.iswizardroll === "true";
+        const result = await Dice.rollConsequences(actorRef, isWizardRoll, {
+            sourceMessageId: message?.id ?? "",
+        });
+        resolved = Boolean(result);
+    } finally {
+        if (!resolved) {
+            restoreOrSyncCard(card, button, message?.id);
+        }
+    }
+}
+
+/**
+ * Collect eligible covering characters across active scene tokens and owned world characters.
+ * @param {string} failedActorUuid
+ * @returns {{
+ *   candidates: DefinitelyWizardsActorLike[],
+ *   hasArrestedCandidate: boolean,
+ *   hasOwnCaster: boolean,
+ * }}
+ */
+function collectCoveringCandidates(failedActorUuid) {
+    const sceneTokens = canvas?.tokens?.placeables?.length
+        ? canvas.tokens.placeables
+        : (game.scenes?.active?.tokens ?? game.scenes?.current?.tokens ?? []);
+
+    /** @type {Map<string, DefinitelyWizardsActorLike>} */
+    const candidatesByUuid = new Map();
+    /** @type {Set<string>} */
+    const unlinkedBaseIds = new Set();
+    let hasArrestedCandidate = false;
+    let hasOwnCaster = false;
+
+    /** @param {DefinitelyWizardsActorLike | null | undefined} actor */
+    const considerActor = (actor) => {
+        if (actor?.type !== "character" || !actor.isOwner) return;
+        if (actor.uuid === failedActorUuid) {
+            hasOwnCaster = true;
+            return;
+        }
+        if (Number(actor.system?.stats?.wild) >= 7) {
+            hasArrestedCandidate = true;
+            return;
+        }
+        if (!candidatesByUuid.has(actor.uuid)) {
+            candidatesByUuid.set(actor.uuid, actor);
+        }
+    };
+
+    for (const token of sceneTokens) {
+        const actor = token?.actor;
+        if (actor?.type === "character" && actor.isOwner && actor.isToken) {
+            unlinkedBaseIds.add(actor.id);
+        }
+        considerActor(actor);
+    }
+
+    for (const actor of game.actors.filter((a) => a.type === "character" && a.isOwner)) {
+        if (unlinkedBaseIds.has(actor.id)) continue;
+        considerActor(actor);
+    }
+
+    return {
+        candidates: Array.from(candidatesByUuid.values()),
+        hasArrestedCandidate,
+        hasOwnCaster,
+    };
+}
+
+/**
+ * Resolve which party character is causing a distraction to Cover a failed roll.
+ * @param {string} failedActorUuid
+ * @returns {Promise<DefinitelyWizardsActorLike | null>}
+ */
+async function resolveCoveringActor(failedActorUuid) {
+    const controlled =
+        canvas.tokens?.controlled
+            .map((token) => token.actor)
+            .filter((actor) => actor && actor.type === "character" && actor.isOwner) ?? [];
+
+    // Fast path: selecting 1 eligible covering token covers immediately without a dialog.
+    // If only the failed caster's token is selected, fall through to let another character cover.
+    if (controlled.length === 1) {
+        const selected = controlled[0];
+        if (selected.uuid !== failedActorUuid) {
+            if (Number(selected.system?.stats?.wild) >= 7) {
+                ui.notifications.warn(game.i18n.localize("DW.AlreadyArrestedWarning"));
+                return null;
+            }
+            return selected;
+        }
+    }
+
+    const assigned = game.user.character;
+    if (
+        assigned &&
+        assigned.type === "character" &&
+        assigned.isOwner &&
+        assigned.uuid !== failedActorUuid &&
+        !game.user.isGM &&
+        Number(assigned.system?.stats?.wild) < 7
+    ) {
+        return assigned;
+    }
+
+    const { candidates, hasArrestedCandidate, hasOwnCaster } =
+        collectCoveringCandidates(failedActorUuid);
+
+    if (candidates.length === 0) {
+        if ((assigned && Number(assigned.system?.stats?.wild) >= 7) || hasArrestedCandidate) {
+            ui.notifications.warn(game.i18n.localize("DW.AlreadyArrestedWarning"));
+        } else if (assigned?.uuid === failedActorUuid || hasOwnCaster) {
+            ui.notifications.warn(game.i18n.localize("DW.CoverOwnSpellWarning"));
+        } else {
+            ui.notifications.warn(game.i18n.localize("DW.NoCoveringCharacter"));
+        }
+        return null;
+    }
+
+    const defaultSelectedUuid =
+        controlled.find(
+            (actor) => actor.uuid !== failedActorUuid && Number(actor.system?.stats?.wild) < 7,
+        )?.uuid ?? candidates[0].uuid;
+
+    const optionsHtml = candidates
+        .map((actor) => {
+            const isSelected = actor.uuid === defaultSelectedUuid ? " selected" : "";
+            return `<option value="${foundry.utils.escapeHTML(actor.uuid)}"${isSelected}>${foundry.utils.escapeHTML(actor.name)} (${game.i18n.localize("DW.Wild")}: ${actor.system.stats.wild})</option>`;
+        })
+        .join("");
+
+    const result = await foundry.applications.api.DialogV2.input({
+        window: { title: game.i18n.localize("DW.ChooseCoveringActorTitle") },
+        content: `<div class="form-group"><label>${game.i18n.localize("DW.ChooseCoveringActorPrompt")}</label><select name="actorUuid">${optionsHtml}</select></div>`,
+        ok: { label: game.i18n.localize("DW.CoverButton") },
+        buttons: [
+            {
+                action: "cancel",
+                label: game.i18n.localize("DW.CancelButton"),
+                icon: "fa-solid fa-xmark",
+                type: "button",
+                callback: () => null,
+            },
+        ],
+        rejectClose: false,
+        modal: true,
+    });
+
+    if (!result?.actorUuid) return null;
+    return Dice.resolveActor(String(result.actorUuid));
+}
+
+/**
+ * Handle clicking "Cover (+1 Wild)" on a teammate's failed skill roll card.
+ * @param {Event} event
+ * @param {ChatMessage} message
+ */
+async function onCoverRoll(event, message) {
+    const button = /** @type {HTMLButtonElement | null} */ (event.currentTarget);
+    const card = /** @type {HTMLElement | null} */ (button?.closest(".skill-roll"));
+    if (!button || !card || button.disabled) return;
+
+    button.disabled = true;
+    let resolved = false;
+
+    try {
+        if (findResolutionMessage(message?.id)) {
+            ui.notifications.warn(game.i18n.localize("DW.AlreadyResolvedWarning"));
+            return;
+        }
+
+        const failedActorUuid = card.dataset.actorUuid || "";
+        const failedActorName = card.dataset.actorName || "";
+
+        const coveringActor = await resolveCoveringActor(failedActorUuid);
+        if (!coveringActor) return;
+
+        const currentWild = Number(coveringActor.system.stats.wild);
+        if (currentWild >= 6) {
+            const confirmed = await foundry.applications.api.DialogV2.confirm({
+                window: { title: game.i18n.localize("DW.CoverArrestConfirmTitle") },
+                content: `<p>${game.i18n.format("DW.CoverArrestConfirmContent", {
+                    name: foundry.utils.escapeHTML(coveringActor.name),
+                    wild: currentWild,
+                    nextWild: currentWild + 1,
+                })}</p>`,
+                rejectClose: false,
+                modal: true,
+            });
+            if (!confirmed) return;
+        }
+
+        if (findResolutionMessage(message?.id)) {
+            ui.notifications.warn(game.i18n.localize("DW.AlreadyResolvedWarning"));
+            return;
+        }
+
+        const result = await Dice.coverForRoll(coveringActor, message?.id ?? "", failedActorName);
+        resolved = Boolean(result);
+    } finally {
+        if (!resolved) {
+            restoreOrSyncCard(card, button, message?.id);
+        }
+    }
+}
+
+/**
+ * Handle clicking "Couldn't Disguise (+1 Wild)" on a successful Wild spell chat card.
+ * @param {Event} event
+ * @param {ChatMessage} message
+ */
+async function onWildDisguiseFail(event, message) {
+    const button = /** @type {HTMLButtonElement | null} */ (event.currentTarget);
+    const card = /** @type {HTMLElement | null} */ (button?.closest(".skill-roll"));
+    if (!button || !card || button.disabled) return;
+
+    button.disabled = true;
+    let resolved = false;
+
+    try {
+        if (findResolutionMessage(message?.id)) {
+            ui.notifications.warn(game.i18n.localize("DW.AlreadyResolvedWarning"));
+            return;
+        }
+
+        const actorRef = card.dataset.actorUuid || card.dataset.ownerId || "";
+        const actor = await Dice.resolveActor(actorRef);
+        if (!actor) return;
+
+        if (!actor.isOwner && !game.user.isGM) {
+            ui.notifications.warn(game.i18n.localize("DW.OnlyOwnerDisguise"));
+            return;
+        }
+
+        if (findResolutionMessage(message?.id)) {
+            ui.notifications.warn(game.i18n.localize("DW.AlreadyResolvedWarning"));
+            return;
+        }
+
+        await actor.updateStat(false, 1);
+
+        const created = await ChatMessage.create({
+            user: game.user.id,
+            speaker: ChatMessage.getSpeaker({ actor }),
+            content: `<div class="definitelywizards chat-card"><p>${foundry.utils.escapeHTML(actor.name)}: +1 ${game.i18n.localize("DW.Wild")}</p></div>`,
+            style: CONST.CHAT_MESSAGE_STYLES.OOC,
+            flags: message?.id
+                ? {
+                      "definitely-wizards": {
+                          resolvedMessageId: message.id,
+                          resolutionType: "disguise-failed",
+                          resolverName: actor.name,
+                      },
+                  }
+                : {},
+        });
+        resolved = Boolean(created);
+    } finally {
+        if (!resolved) {
+            restoreOrSyncCard(card, button, message?.id);
+        }
+    }
+}
+
+/**
+ * Handle clicking "Undo Cover (-1 Wild)" on a Cover chat card.
+ * @param {Event} event
+ * @param {ChatMessage} message
+ */
+async function onUndoCover(event, message) {
+    const button = /** @type {HTMLButtonElement | null} */ (event.currentTarget);
+    if (!button || button.disabled) return;
+
+    button.disabled = true;
+    let undone = false;
+
+    try {
+        if (!message?.id || !game.messages.get(message.id)) return;
+
+        const actorRef =
+            message.getFlag("definitely-wizards", "coveringActorUuid") ||
+            button.dataset.actorUuid ||
+            "";
+        const actor = await Dice.resolveActor(actorRef);
+
+        if (actor && !actor.isOwner && !game.user.isGM) {
+            ui.notifications.warn(game.i18n.localize("DW.OnlyOwnerUndoCover"));
+            return;
+        }
+
+        if (!message.canUserModify(game.user, "delete")) {
+            ui.notifications.warn(game.i18n.localize("DW.CannotUndoCoverPermission"));
+            return;
+        }
+
+        if (actor && Number(actor.system?.stats?.wild) > 0) {
+            await actor.updateStat(false, -1, { silent: true });
+        }
+
+        const relatedIds = message.getFlag("definitely-wizards", "relatedMessageIds");
+        if (Array.isArray(relatedIds)) {
+            for (const msgId of relatedIds) {
+                const relatedMsg = game.messages.get(String(msgId));
+                if (relatedMsg?.canUserModify(game.user, "delete")) {
+                    await relatedMsg.delete();
+                }
+            }
+        }
+
+        await message.delete();
+        undone = true;
+    } finally {
+        if (!undone && button.isConnected) {
+            button.disabled = false;
+        }
+    }
+}
+
+/**
+ * Handle Costuming (+1 Wizard / -1 Wild) buttons rendered inside a Prop chat card.
  * @param {Event} event
  */
-function onRollConsequences(event) {
-    const target = /** @type {HTMLElement | null} */ (event.currentTarget);
-    const card = /** @type {HTMLElement | null} */ (target?.closest(".skill-roll"));
-    if (!card) return;
+async function onPropCostumingChat(event) {
+    const button = /** @type {HTMLButtonElement | null} */ (event.currentTarget);
+    if (!button) return;
 
-    const actorID = card.dataset.ownerId ?? "";
-    const isWizardRoll = card.dataset.iswizardroll === "true";
+    const actorRef = button.dataset.actorUuid ?? "";
+    const actor = await Dice.resolveActor(actorRef);
+    if (!actor) return;
 
-    Dice.rollConsequences(actorID, isWizardRoll);
+    if (!actor.isOwner && !game.user.isGM) {
+        ui.notifications.warn(game.i18n.localize("DW.OnlyOwnerCostuming"));
+        return;
+    }
+
+    const isWizard = button.dataset.stat === "wizard";
+    const propName = button.dataset.propName ?? game.i18n.localize("DW.PropFallbackName");
+    await actor.applyCostuming(isWizard, propName);
 }
