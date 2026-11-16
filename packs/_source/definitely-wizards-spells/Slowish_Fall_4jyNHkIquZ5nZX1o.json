@@ -1,0 +1,33 @@
+{
+  "name": "Slowish Fall",
+  "type": "Spell",
+  "img": "systems/definitely-wizards/resources/icons/magic-wand.svg",
+  "system": {
+    "description": "<p><span class=\"fontstyle0\">Maybe now you won&rsquo;t break your legs.</span> </p>",
+    "quantity": 1,
+    "weight": 0
+  },
+  "effects": [],
+  "flags": {
+    "core": {}
+  },
+  "_stats": {
+    "systemId": "definitely-wizards",
+    "systemVersion": "1.3.0",
+    "coreVersion": "14.370",
+    "createdTime": 1677094631975,
+    "modifiedTime": 1695756096671,
+    "lastModifiedBy": "LrQo9hT2KbTwz0xO",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "_id": "4jyNHkIquZ5nZX1o",
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "LrQo9hT2KbTwz0xO": 3
+  },
+  "_key": "!items!4jyNHkIquZ5nZX1o"
+}

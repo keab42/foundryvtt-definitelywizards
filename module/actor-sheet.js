@@ -1,5 +1,6 @@
 import { DEFAULT_WIZARD_SPELL_NAMES } from "./data-models.js";
 import * as Dice from "./dice.js";
+import { STAT_MACRO_TYPE } from "./macros.js";
 
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 const { ActorSheetV2 } = foundry.applications.sheets;
@@ -42,6 +43,19 @@ function getStartingPropStatus(actor, slot) {
         (item) => item.type === propItemType && item.name.trim().toLowerCase() === targetName,
     );
     return { description, inInventory, canAdd: true };
+}
+
+/**
+ * Resolve the d6 or Wit Bonus roll formula from an element dataset or Shift modifier.
+ * @param {PointerEvent | undefined} event
+ * @param {HTMLElement} target
+ * @returns {"1d6" | "2d6kl"}
+ */
+function resolveRollFormula(event, target) {
+    if (target.dataset.roll === "2d6kl" || event?.shiftKey) {
+        return "2d6kl";
+    }
+    return "1d6";
 }
 
 /**
@@ -102,7 +116,6 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
     async _prepareContext(options) {
         const context = await super._prepareContext(options);
         const source = this.actor.toObject();
-        const { TextEditor } = foundry.applications.ux;
 
         context.actor = this.actor;
         context.system = this.actor.system;
@@ -116,6 +129,7 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
         const wildVal = Number(this.actor.system.stats.wild);
         context.isWizardHigh = wizardVal >= 6;
         context.isWildHigh = wildVal >= 6;
+        context.isWildArrested = wildVal >= 7;
         if (wildVal >= 7) {
             const arrestedMsg = game.i18n.localize("DW.AlreadyArrestedWarning");
             context.wizardRollTooltip = arrestedMsg;
@@ -166,42 +180,46 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
             (name) => !ownedSpellNames.has(name),
         );
 
-        context.enrichedBiography = await TextEditor.implementation.enrichHTML(
-            this.actor.system.biography ?? "",
+        context.enrichedBiography = await Dice.enrichHtml(this.actor.system.biography, {
+            document: this.actor,
+            secrets: this.actor.isOwner,
+        });
+
+        context.enrichedClassDescription = await Dice.enrichHtml(
+            this.actor.system.classDescription,
             {
+                document: this.actor,
                 secrets: this.actor.isOwner,
-                rollData: () => this.actor.getRollData(),
-                relativeTo: this.actor,
             },
         );
 
-        context.enrichedClassDescription = await TextEditor.implementation.enrichHTML(
-            this.actor.system.classDescription ?? "",
-            {
-                secrets: this.actor.isOwner,
-                rollData: () => this.actor.getRollData(),
-                relativeTo: this.actor,
-            },
-        );
-
-        this._prepareCharacterItems(context);
+        await this._prepareCharacterItems(context);
 
         return context;
     }
 
     /**
-     * Partition embedded Items into props, miscItems, and spells.
+     * Partition embedded Items into props, miscItems, and spells with enriched descriptions.
      * @param {Record<string, any>} context
      */
-    _prepareCharacterItems(context) {
+    async _prepareCharacterItems(context) {
         const miscItems = [];
         const props = [];
         const spells = [];
 
-        for (const itemDoc of this.actor.items.contents) {
-            const item = itemDoc.toObject(false);
-            item.img = item.img || Item.DEFAULT_ICON;
+        const preparedItems = await Promise.all(
+            this.actor.items.contents.map(async (itemDoc) => {
+                const item = itemDoc.toObject(false);
+                item.img = item.img || Item.DEFAULT_ICON;
+                item.enrichedDescription = await Dice.enrichHtml(item.system?.description, {
+                    document: itemDoc,
+                    secrets: itemDoc.isOwner,
+                });
+                return item;
+            }),
+        );
 
+        for (const item of preparedItems) {
             if (item.type === itemItemType) {
                 miscItems.push(item);
             } else if (item.type === propItemType) {
@@ -227,6 +245,25 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
                 : "";
         }
         return submitData;
+    }
+
+    /** @override */
+    async _onDragStart(event) {
+        const target = /** @type {HTMLElement | null} */ (event.currentTarget);
+        const stat = target?.dataset.stat;
+        const formula = target?.dataset.roll;
+        if (stat && formula && event.dataTransfer) {
+            event.dataTransfer.setData(
+                "text/plain",
+                JSON.stringify({
+                    type: STAT_MACRO_TYPE,
+                    isWizardRoll: stat === "wizard",
+                    formula,
+                }),
+            );
+            return;
+        }
+        return super._onDragStart(event);
     }
 
     /**
@@ -270,12 +307,12 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
 
     /**
      * @this {DefinitelyWizardsActorSheet}
-     * @param {PointerEvent} _event
+     * @param {PointerEvent} event
      * @param {HTMLElement} target
      */
-    static async _onStatRoll(_event, target) {
+    static async _onStatRoll(event, target) {
         const isWizardRoll = DefinitelyWizardsActorSheet._isWizardTarget(target);
-        const formula = target.dataset.roll ?? "1d6";
+        const formula = resolveRollFormula(event, target);
         await Dice.rollSkill(this.actor, { isWizardRoll, formula });
     }
 
@@ -317,31 +354,31 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
     /**
      * Cast a Wizard spell directly from the Spells tab (1d6 or 2d6kl Wit Bonus).
      * @this {DefinitelyWizardsActorSheet}
-     * @param {PointerEvent} _event
+     * @param {PointerEvent} event
      * @param {HTMLElement} target
      */
-    static async _onCastSpell(_event, target) {
+    static async _onCastSpell(event, target) {
         const row = /** @type {HTMLElement | null} */ (target.closest("[data-item-id]"));
         const itemId = row?.dataset.itemId;
         const spell = itemId ? this.actor.items.get(itemId) : null;
         if (!spell) return;
 
-        const formula = target.dataset.roll ?? "1d6";
+        const formula = resolveRollFormula(event, target);
         await Dice.rollSkill(this.actor, { isWizardRoll: true, formula, spell });
     }
 
     /**
      * Cast an improvised Wild spell from the Spells tab (1d6 or 2d6kl Wit Bonus).
      * @this {DefinitelyWizardsActorSheet}
-     * @param {PointerEvent} _event
+     * @param {PointerEvent} event
      * @param {HTMLElement} target
      */
-    static async _onCastWildSpell(_event, target) {
+    static async _onCastWildSpell(event, target) {
         const noteInput = /** @type {HTMLInputElement | null} */ (
             this.element?.querySelector(".dw-wild-spell-note")
         );
         const customSpellName = noteInput?.value?.trim() || game.i18n.localize("DW.WildSpellLabel");
-        const formula = target.dataset.roll ?? "1d6";
+        const formula = resolveRollFormula(event, target);
         await Dice.rollSkill(this.actor, {
             isWizardRoll: false,
             formula,
@@ -468,46 +505,21 @@ export class DefinitelyWizardsActorSheet extends HandlebarsApplicationMixin(Acto
 
     /**
      * @this {DefinitelyWizardsActorSheet}
-     * @param {PointerEvent} _event
+     * @param {PointerEvent} event
      * @param {HTMLElement} target
      */
-    static async _onRollItem(_event, target) {
+    static async _onRollItem(event, target) {
         const row = /** @type {HTMLElement | null} */ (target.closest("[data-item-id]"));
         const itemID = row?.dataset.itemId;
         if (!itemID) return;
         const item = this.actor.items.get(itemID);
         if (!item) return;
 
-        const safeName = foundry.utils.escapeHTML(item.name);
-        const safeImg = foundry.utils.escapeHTML(item.img ?? "");
-        const safeActorUuid = foundry.utils.escapeHTML(this.actor.uuid);
-
-        let costumingButtons = "";
-        if (item.type === propItemType) {
-            costumingButtons = `
-                <div class="card-buttons">
-                    <button type="button" class="propCostumingChat" data-actor-uuid="${safeActorUuid}" data-stat="wizard" data-prop-name="${safeName}">
-                        ${game.i18n.localize("DW.CostumingWizardButton")}
-                    </button>
-                    <button type="button" class="propCostumingChat" data-actor-uuid="${safeActorUuid}" data-stat="wild" data-prop-name="${safeName}">
-                        ${game.i18n.localize("DW.CostumingWildButton")}
-                    </button>
-                </div>`;
+        if (item.type === spellItemType && event?.shiftKey) {
+            await Dice.rollSkill(this.actor, { isWizardRoll: true, formula: "2d6kl", spell: item });
+            return;
         }
 
-        const messageData = {
-            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-            content: `
-                <div class="definitelywizards chat-card">
-                    <div class="chatItem flexrow">
-                        <div class="item-image" tabindex="0" aria-label="${safeName}" style="background-image: url('${safeImg}')"></div>
-                        <h4>${safeName}</h4>
-                    </div>
-                    <div>${item.system.description ?? ""}</div>
-                    ${costumingButtons}
-                </div>`,
-        };
-
-        await ChatMessage.create(messageData);
+        await Dice.postItemCard(this.actor, item);
     }
 }

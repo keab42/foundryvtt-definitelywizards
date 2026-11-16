@@ -7,6 +7,6 @@ node_modules/
 local-images/
 .vscode/launch.json
 
-# LevelDB pack lock/log artifacts
-packs/**/LOCK
-packs/**/LOG*
+# Compiled LevelDB compendiums
+packs/*
+!packs/_source/

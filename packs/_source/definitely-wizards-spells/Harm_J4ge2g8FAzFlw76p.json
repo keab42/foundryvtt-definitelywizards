@@ -1,0 +1,33 @@
+{
+  "name": "Harm",
+  "type": "Spell",
+  "img": "systems/definitely-wizards/resources/icons/magic-wand.svg",
+  "system": {
+    "description": "<p><span class=\"fontstyle0\">You hurl a tiny ball of magical force, like throwing a pop-it firework.</span> </p>",
+    "quantity": 1,
+    "weight": 0
+  },
+  "effects": [],
+  "flags": {
+    "core": {}
+  },
+  "_stats": {
+    "systemId": "definitely-wizards",
+    "systemVersion": "1.3.0",
+    "coreVersion": "14.370",
+    "createdTime": 1677094582934,
+    "modifiedTime": 1695756096671,
+    "lastModifiedBy": "LrQo9hT2KbTwz0xO",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "_id": "J4ge2g8FAzFlw76p",
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "LrQo9hT2KbTwz0xO": 3
+  },
+  "_key": "!items!J4ge2g8FAzFlw76p"
+}

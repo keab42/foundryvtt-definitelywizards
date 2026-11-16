@@ -1,0 +1,31 @@
+{
+  "name": "A Pointy Hat and Robes",
+  "type": "Prop",
+  "img": "systems/definitely-wizards/resources/icons/wizard-hat.svg",
+  "system": {
+    "description": "<p><span class=\"fontstyle0\">The fabric is covered in a pattern of glowing stars.</span> </p>",
+    "quantity": 1,
+    "weight": 0
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "systemId": "definitely-wizards",
+    "systemVersion": "1.1",
+    "coreVersion": "14.370",
+    "createdTime": 1677094006683,
+    "modifiedTime": 1677102484710,
+    "lastModifiedBy": "7tb3mKRi81OTM7ij",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_id": "Kzhk3vz9hWyDq34l",
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "7tb3mKRi81OTM7ij": 3
+  },
+  "_key": "!items!Kzhk3vz9hWyDq34l"
+}

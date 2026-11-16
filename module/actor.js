@@ -1,5 +1,6 @@
 import { DEFAULT_WIZARD_SPELLS } from "./data-models.js";
 
+const CHARACTER_DEFAULT_ICON = "systems/definitely-wizards/resources/icons/wizard-character.svg";
 const PROP_DEFAULT_ICON = "systems/definitely-wizards/resources/icons/wizard-hat.svg";
 const SPELL_DEFAULT_ICON = "systems/definitely-wizards/resources/icons/magic-wand.svg";
 
@@ -7,6 +8,52 @@ const SPELL_DEFAULT_ICON = "systems/definitely-wizards/resources/icons/magic-wan
  * Extend the base Actor document for the Definitely Wizards system.
  */
 export class DefinitelyWizardsActor extends Actor {
+    /**
+     * Provide custom default artwork for newly created characters.
+     * @override
+     * @param {Record<string, any>} actorData
+     * @returns {{ img: string, texture: { src: string } }}
+     */
+    static getDefaultArtwork(actorData) {
+        if (actorData?.type === "character") {
+            return {
+                img: CHARACTER_DEFAULT_ICON,
+                texture: { src: CHARACTER_DEFAULT_ICON },
+            };
+        }
+        return super.getDefaultArtwork(actorData);
+    }
+
+    /**
+     * Default character prototype tokens to linked, friendly, and owner-hover nameplate
+     * unless explicitly set in creation data.
+     * @override
+     * @param {Record<string, any>} data
+     * @param {Record<string, any>} options
+     * @param {any} user
+     */
+    async _preCreate(data, options, user) {
+        const allowed = await super._preCreate(data, options, user);
+        if (allowed === false) return false;
+
+        if (this.type !== "character") return;
+
+        /** @type {Record<string, any>} */
+        const prototypeToken = {};
+        if (!foundry.utils.hasProperty(data, "prototypeToken.actorLink")) {
+            prototypeToken.actorLink = true;
+        }
+        if (!foundry.utils.hasProperty(data, "prototypeToken.disposition")) {
+            prototypeToken.disposition = CONST.TOKEN_DISPOSITIONS.FRIENDLY;
+        }
+        if (!foundry.utils.hasProperty(data, "prototypeToken.displayName")) {
+            prototypeToken.displayName = CONST.TOKEN_DISPLAY_MODES.OWNER_HOVER;
+        }
+        if (Object.keys(prototypeToken).length > 0) {
+            this.updateSource({ prototypeToken });
+        }
+    }
+
     /**
      * Populate the 10 standard low-grade Wizard spells for newly created characters.
      * @override
@@ -166,6 +213,48 @@ export class DefinitelyWizardsActor extends Actor {
      * @param {string[] | null} [options.createdMessageIds=null]
      * @returns {Promise<boolean>}
      */
+    /**
+     * Post stat transition and milestone alert messages after a stat mutation completes.
+     * @param {boolean} isWizard
+     * @param {number} oldValue
+     * @param {number} newValue
+     * @param {object} [options]
+     * @param {number} [options.otherStat=0]
+     * @param {boolean} [options.suppressBothLockedAlert=false]
+     * @param {string[] | null} [options.createdMessageIds=null]
+     * @returns {Promise<void>}
+     */
+    async _postStatTransitionMessages(
+        isWizard,
+        oldValue,
+        newValue,
+        { otherStat = 0, suppressBothLockedAlert = false, createdMessageIds = null } = {},
+    ) {
+        /** @param {ChatMessage | undefined} msg */
+        const recordMsg = (msg) => {
+            if (msg?.id && createdMessageIds) {
+                createdMessageIds.push(msg.id);
+            }
+        };
+
+        recordMsg(await this._postUpdateToChat(isWizard, oldValue, newValue));
+
+        if (!isWizard && newValue >= 7) {
+            recordMsg(await this._postAlertToChat("DW.EndGame", "dw-wild-card"));
+        } else if (oldValue < 6 && newValue === 6) {
+            if (otherStat === 6 && !suppressBothLockedAlert) {
+                recordMsg(await this._postAlertToChat("DW.BothStatsReachedSix"));
+            } else if (isWizard) {
+                recordMsg(await this._postAlertToChat("DW.WizardReachedSix", "dw-wizard-card"));
+            } else {
+                recordMsg(await this._postAlertToChat("DW.WildReachedSix", "dw-wild-card"));
+            }
+            if (!isWizard) {
+                recordMsg(await this._checkPartyWildArrest());
+            }
+        }
+    }
+
     async updateStat(
         isWizard,
         offset,
@@ -184,29 +273,11 @@ export class DefinitelyWizardsActor extends Actor {
         await this.update({ [fieldPath]: newValue });
         if (silent) return true;
 
-        /** @param {ChatMessage | undefined} msg */
-        const recordMsg = (msg) => {
-            if (msg?.id && createdMessageIds) {
-                createdMessageIds.push(msg.id);
-            }
-        };
-
-        recordMsg(await this._postUpdateToChat(isWizard, oldValue, newValue));
-
-        if (!isWizard && newValue >= 7) {
-            recordMsg(await this._postAlertToChat("DW.EndGame"));
-        } else if (oldValue < 6 && newValue === 6) {
-            if (otherStat === 6 && !suppressBothLockedAlert) {
-                recordMsg(await this._postAlertToChat("DW.BothStatsReachedSix"));
-            } else if (isWizard) {
-                recordMsg(await this._postAlertToChat("DW.WizardReachedSix"));
-            } else {
-                recordMsg(await this._postAlertToChat("DW.WildReachedSix"));
-            }
-            if (!isWizard) {
-                recordMsg(await this._checkPartyWildArrest());
-            }
-        }
+        await this._postStatTransitionMessages(isWizard, oldValue, newValue, {
+            otherStat,
+            suppressBothLockedAlert,
+            createdMessageIds,
+        });
 
         return true;
     }
@@ -246,21 +317,31 @@ export class DefinitelyWizardsActor extends Actor {
             return false;
         }
 
-        const changed = await this.updateStat(isWizard, isWizard ? 1 : -1);
+        const oldValue = isWizard ? currentWizard : currentWild;
+        const otherStat = isWizard ? currentWild : currentWizard;
+        const newValue = isWizard ? currentWizard + 1 : currentWild - 1;
+        const changed = await this.updateStat(isWizard, isWizard ? 1 : -1, { silent: true });
         if (!changed) return false;
 
         const key = isWizard ? "DW.CostumingMessageWizard" : "DW.CostumingMessageWild";
         const safeActor = foundry.utils.escapeHTML(this.name);
         const safeProp = foundry.utils.escapeHTML(propName);
 
+        const cardVariantClass = isWizard ? "dw-wizard-card" : "dw-wild-card";
+
         await ChatMessage.create({
             user: game.user.id,
             speaker: ChatMessage.getSpeaker({ actor: this }),
-            content: `<div class="definitelywizards chat-card"><p>${game.i18n.format(key, {
-                actor: safeActor,
-                prop: safeProp,
-            })}</p></div>`,
+            content: `<div class="definitelywizards chat-card ${cardVariantClass}"><p>${game.i18n.format(
+                key,
+                {
+                    actor: safeActor,
+                    prop: safeProp,
+                },
+            )}</p></div>`,
         });
+
+        await this._postStatTransitionMessages(isWizard, oldValue, newValue, { otherStat });
 
         return true;
     }
@@ -325,7 +406,7 @@ export class DefinitelyWizardsActor extends Actor {
             party.some((actor) => actor.uuid === this.uuid) &&
             party.every((actor) => Number(actor.system?.stats?.wild) >= 6)
         ) {
-            return this._postAlertToChat("DW.PartyEndGame");
+            return this._postAlertToChat("DW.PartyEndGame", "dw-wild-card");
         }
         return undefined;
     }
@@ -333,13 +414,17 @@ export class DefinitelyWizardsActor extends Actor {
     /**
      * Post a styled rule alert card to chat.
      * @param {string} localizationKey
+     * @param {string} [cardVariantClass=""]
      * @returns {Promise<ChatMessage | undefined>}
      */
-    async _postAlertToChat(localizationKey) {
+    async _postAlertToChat(localizationKey, cardVariantClass = "") {
+        const classAttr = cardVariantClass
+            ? `definitelywizards chat-card ${cardVariantClass}`
+            : "definitelywizards chat-card";
         return ChatMessage.create({
             user: game.user.id,
             speaker: ChatMessage.getSpeaker({ actor: this }),
-            content: `<div class="definitelywizards chat-card"><p><strong>${game.i18n.localize(localizationKey)}</strong></p></div>`,
+            content: `<div class="${classAttr}"><p><strong>${game.i18n.localize(localizationKey)}</strong></p></div>`,
         });
     }
 

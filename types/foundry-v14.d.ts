@@ -11,6 +11,7 @@ declare namespace foundry {
         function isNewerVersion(v1: string, v0: string): boolean;
         function fromUuid(uuid: string): Promise<any>;
         function escapeHTML(str: string): string;
+        function hasProperty(object: object, key: string): boolean;
     }
 
     namespace data {
@@ -212,6 +213,7 @@ declare namespace foundry {
         namespace sheets {
             class ActorSheetV2 extends foundry.applications.api.DocumentSheetV2 {
                 readonly actor: Actor;
+                _onDragStart(event: DragEvent): Promise<void>;
             }
             class ItemSheetV2 extends foundry.applications.api.DocumentSheetV2 {
                 readonly item: Item;
@@ -273,6 +275,10 @@ declare namespace foundry {
 
 declare class Actor {
     static DEFAULT_ICON: string;
+    static getDefaultArtwork(actorData: Record<string, any>): {
+        img: string;
+        texture: { src: string };
+    };
     id: string;
     _id: string;
     uuid: string;
@@ -296,7 +302,13 @@ declare class Actor {
     sheet: {
         render(force?: boolean | Record<string, any>): Promise<any>;
     };
+    _preCreate(
+        data: Record<string, any>,
+        options: Record<string, any>,
+        user: any,
+    ): Promise<boolean | undefined>;
     _onCreate(data: Record<string, any>, options: Record<string, any>, userId: string): void;
+    updateSource(changes?: Record<string, any>, options?: Record<string, any>): Record<string, any>;
     getRollData(): Record<string, any>;
     toObject(source?: boolean): Record<string, any>;
     update(data: Record<string, any>, options?: Record<string, any>): Promise<this | undefined>;
@@ -323,6 +335,7 @@ declare class Actor {
 declare class Item {
     static DEFAULT_ICON: string;
     static getDefaultArtwork(itemData: Record<string, any>): { img: string };
+    static fromDropData(data: Record<string, any>): Promise<Item | null>;
     id: string;
     _id: string;
     uuid: string;
@@ -331,6 +344,7 @@ declare class Item {
     img: string;
     type: string;
     isOwner: boolean;
+    parent?: Actor | null;
     system: Record<string, any>;
     sheet: {
         render(force?: boolean | Record<string, any>): Promise<any>;
@@ -339,6 +353,32 @@ declare class Item {
     toObject(source?: boolean): Record<string, any>;
     update(data: Record<string, any>, options?: Record<string, any>): Promise<this | undefined>;
     delete(operation?: Record<string, any>): Promise<this | undefined>;
+}
+
+declare class Macro {
+    id: string;
+    name: string;
+    img: string;
+    type: string;
+    command: string;
+    isOwner: boolean;
+    ownership?: {
+        default?: number;
+        [userId: string]: number | undefined;
+    };
+    flags?: Record<string, any>;
+    getFlag?(scope: string, key: string): any;
+    update?(data: Record<string, any>, options?: Record<string, any>): Promise<this | undefined>;
+    static canUserCreate(user: UserDocumentLike): boolean;
+    static create(
+        data: Record<string, any> | Array<Record<string, any>>,
+        operation?: Record<string, any>,
+    ): Promise<Macro | undefined>;
+    static createDocuments(
+        data?: Array<Record<string, any>>,
+        operation?: Record<string, any>,
+    ): Promise<Macro[]>;
+    toObject(source?: boolean): Record<string, any>;
 }
 
 declare class JournalEntry {
@@ -367,6 +407,7 @@ declare class ChatMessage {
     id: string;
     getFlag(scope: string, key: string): any;
     canUserModify(user: UserDocumentLike, action: string): boolean;
+    update(data: Record<string, any>, options?: Record<string, any>): Promise<this | undefined>;
     delete(operation?: Record<string, any>): Promise<this | undefined>;
     static getSpeaker(options?: {
         scene?: any;
@@ -415,6 +456,14 @@ declare const Hooks: {
         hook: "deleteChatMessage",
         fn: (message: ChatMessage, options: Record<string, any>, userId: string) => any,
     ): number;
+    on(
+        hook: "hotbarDrop",
+        fn: (bar: any, data: Record<string, any>, slot: number | string) => boolean | void,
+    ): number;
+    on(
+        hook: "createUser",
+        fn: (user: UserDocumentLike, options: Record<string, any>, userId: string) => any,
+    ): number;
     on(hook: string, fn: (...args: any[]) => any): number;
 };
 
@@ -449,6 +498,26 @@ declare const CONST: {
         COMPENDIUM: string;
     };
     DEFAULT_TOKEN: string;
+    TOKEN_DISPOSITIONS: {
+        SECRET: number;
+        HOSTILE: number;
+        NEUTRAL: number;
+        FRIENDLY: number;
+    };
+    TOKEN_DISPLAY_MODES: {
+        NONE: number;
+        CONTROL: number;
+        OWNER_HOVER: number;
+        HOVER: number;
+        OWNER: number;
+        ALWAYS: number;
+    };
+    DOCUMENT_OWNERSHIP_LEVELS: {
+        NONE: number;
+        LIMITED: number;
+        OBSERVER: number;
+        OWNER: number;
+    };
 };
 
 declare const game: {
@@ -457,6 +526,10 @@ declare const game: {
     users: {
         activeGM: UserDocumentLike | null;
         filter(predicate: (user: UserDocumentLike) => boolean): UserDocumentLike[];
+    };
+    settings: {
+        register(namespace: string, key: string, data: Record<string, any>): void;
+        get(namespace: string, key: string): any;
     };
     i18n: {
         localize(key: string): string;
@@ -478,6 +551,13 @@ declare const game: {
     packs: {
         get(name: string): { getDocuments(): Promise<any[]> } | undefined;
     };
+    macros: {
+        find(predicate: (macro: Macro) => boolean): Macro | undefined;
+        get(id: string): Macro | undefined;
+    };
+    keyboard?: {
+        isModifierActive(modifier: "CONTROL" | "SHIFT" | "ALT"): boolean;
+    };
     tables: {
         contents: RollTable[];
         getName(name: string): RollTable | undefined;
@@ -487,6 +567,15 @@ declare const game: {
     };
     definitelyWizards?: {
         generatePracticalExam: () => Promise<JournalEntry | ChatMessage | null>;
+        rollStatMacro: (options?: {
+            isWizardRoll?: boolean;
+            formula?: string;
+            witBonus?: boolean;
+        }) => Promise<ChatMessage | null | undefined>;
+        rollItemMacro: (
+            itemUuid: string,
+            options?: { witBonus?: boolean },
+        ) => Promise<ChatMessage | null | undefined>;
     };
 };
 
@@ -513,6 +602,16 @@ interface UserDocumentLike {
     isGM: boolean;
     isSelf: boolean;
     character: DefinitelyWizardsActorLike | null;
+    hotbar?: Record<string, string>;
+    getFlag?(scope: string, key: string): any;
+    update?(data: Record<string, any>, options?: Record<string, any>): Promise<this | undefined>;
+    hasPermission(permission: string): boolean;
+    hasRole(role: string | number): boolean;
+    assignHotbarMacro(
+        macro: Macro | null,
+        slot?: number | string,
+        options?: { fromSlot?: number | string },
+    ): Promise<UserDocumentLike>;
 }
 
 interface TokenDocumentLike {

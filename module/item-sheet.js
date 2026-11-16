@@ -1,3 +1,5 @@
+import { enrichHtml } from "./dice.js";
+
 const { HandlebarsApplicationMixin } = foundry.applications.api;
 const { ItemSheetV2 } = foundry.applications.sheets;
 
@@ -30,21 +32,16 @@ export class DefinitelyWizardsItemSheet extends HandlebarsApplicationMixin(ItemS
     async _prepareContext(options) {
         const context = await super._prepareContext(options);
         const source = this.item.toObject();
-        const { TextEditor } = foundry.applications.ux;
 
         context.item = this.item;
         context.system = this.item.system;
         context.source = source;
         context.editable = this.isEditable;
         context.owner = this.item.isOwner;
-        context.enrichedDescription = await TextEditor.implementation.enrichHTML(
-            this.item.system.description ?? "",
-            {
-                secrets: this.item.isOwner,
-                rollData: () => this.item.getRollData(),
-                relativeTo: this.item,
-            },
-        );
+        context.enrichedDescription = await enrichHtml(this.item.system.description, {
+            document: this.item,
+            secrets: this.item.isOwner,
+        });
 
         return context;
     }

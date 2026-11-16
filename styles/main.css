@@ -39,6 +39,8 @@
 
 .definitelywizards.chat-card {
     background: var(--dw-color-light);
+    border: 1px solid var(--dw-color-dark-10);
+    border-radius: 6px;
     padding: 6px;
 
     .card-buttons {
@@ -259,6 +261,18 @@
         cursor: pointer;
     }
 
+    .draggable[draggable="true"]:not(.stat-locked) {
+        cursor: grab;
+
+        &:active {
+            cursor: grabbing;
+        }
+    }
+
+    .draggable.expand[draggable="true"]:not(.stat-locked):hover {
+        cursor: grab;
+    }
+
     .stat-locked {
         opacity: 0.35;
         filter: grayscale(1);
@@ -267,6 +281,7 @@
 
     .stat-locked.expand:hover {
         transform: none;
+        cursor: not-allowed;
     }
 
     .error-red {
@@ -291,6 +306,78 @@
     }
 }
 
+.definitelywizards.chat-card {
+    &[data-isWizardRoll="true"],
+    &.dw-wizard-card {
+        background: #eef4ff;
+        border-left: 4px solid #1d4ed8;
+        --color-text-secondary: #1e40af;
+
+        .dw-cast-spell-header {
+            border-bottom-color: rgb(29 78 216 / 20%);
+        }
+
+        h2,
+        .card-content p:first-child strong {
+            color: #1e3a8a;
+        }
+
+        .dw-wit-bonus-row,
+        .dw-reset-banner {
+            background: rgb(29 78 216 / 10%);
+        }
+
+        .dw-reset-banner {
+            border-left-color: #1d4ed8;
+        }
+
+        .dw-die-face.kept {
+            background: #fbbf24;
+            border-color: #1d4ed8;
+            color: #172554;
+        }
+    }
+
+    &[data-isWizardRoll="false"],
+    &.dw-wild-card {
+        background: #fff1f5;
+        border-left: 4px solid #be185d;
+        --color-text-secondary: #9d174d;
+
+        .dw-cast-spell-header {
+            border-bottom-color: rgb(190 24 93 / 20%);
+        }
+
+        h2,
+        .card-content p:first-child strong {
+            color: #831843;
+        }
+
+        .dw-wit-bonus-row,
+        .dw-reset-banner {
+            background: rgb(190 24 93 / 10%);
+        }
+
+        .dw-reset-banner {
+            border-left-color: #be185d;
+        }
+
+        .dw-die-face.kept {
+            background: #fdba74;
+            border-color: #be185d;
+            color: #500724;
+        }
+    }
+
+    .dw-outcome-success {
+        color: #166534;
+    }
+
+    .dw-outcome-fail {
+        color: #991b1b;
+    }
+}
+
 .definitelywizards.item .window-content .sheet-header {
     display: flex;
     align-items: center;
@@ -301,7 +388,9 @@
         height: 64px;
         width: 64px;
         object-fit: cover;
-        background-color: var(--dw-color-dark-10);
+        background-color: #fffdf5;
+        border: 2px solid var(--dw-color-dark);
+        border-radius: 6px;
     }
 
     > img[data-action="editImage"] {
@@ -340,7 +429,9 @@
         margin: 14px 0 0 0;
 
         a {
+            background: rgb(25 22 13 / 5%);
             border: 1px solid var(--dw-color-dark);
+            border-bottom: none;
             border-radius: 10px 10px 0 0;
             flex: 1;
             font-family: var(--dw-font-title);
@@ -358,7 +449,9 @@
     }
 
     .sheet-body {
+        background: #fffdf5;
         border: 1px solid var(--dw-color-text);
+        border-radius: 0 6px 6px 6px;
         padding: 5px;
         display: flex;
         flex-direction: column;
@@ -394,7 +487,9 @@
             height: 100px;
             width: 100px;
             object-fit: cover;
-            background-color: var(--dw-color-dark-10);
+            background-color: #fffdf5;
+            border: 2px solid var(--dw-color-dark);
+            border-radius: 6px;
         }
 
         .profile-img[data-action="editImage"] {
@@ -421,28 +516,93 @@
 
         .dw-stat-wizard,
         .dw-stat-wild {
-            gap: 0;
-            margin-top: -10px;
+            gap: 4px;
+            margin-top: 0;
+            padding: 6px 8px;
+            border-radius: 6px;
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             grid-template-rows: auto 1fr auto;
             grid-template-areas:
-                "title title title ."
-                "value die dice ."
-                "plus minus reset .";
+                "title title title"
+                "value die dice"
+                "plus minus reset";
             align-items: center;
-        }
-
-        .dw-stat-wizard {
-            grid-area: wizard;
-        }
-
-        .dw-stat-wild {
-            grid-area: wild;
+            justify-items: center;
         }
 
         .stat-title {
             grid-area: title;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
+            font-size: 1.15rem;
+            padding-bottom: 2px;
+        }
+
+        .dw-stat-title-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dw-stat-icon {
+            display: block;
+            width: 22px;
+            height: 22px;
+            flex: 0 0 auto;
+        }
+
+        .dw-stat-badge {
+            font-family: var(--dw-font-body);
+            font-size: 0.65rem;
+            font-weight: 700;
+            line-height: 1.1;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #f87171;
+        }
+
+        .dw-stat-badge.dw-stat-badge-arrested {
+            background: #dc2626;
+            color: #ffffff;
+            border-color: #fca5a5;
+        }
+
+        .dw-stat-wizard {
+            grid-area: wizard;
+            background: #eff6ff;
+            border: 1.5px solid #60a5fa;
+            border-left: 4px solid #1e2b4d;
+
+            .stat-title {
+                background: #1e2b4d;
+                color: #eff6ff;
+                border-radius: 4px;
+                padding: 3px 8px;
+                border-bottom: 2px solid #fbbf24;
+            }
+        }
+
+        .dw-stat-wild {
+            grid-area: wild;
+            background: #fff1f2;
+            border: 1.5px solid #f472b6;
+            border-left: 4px solid #431a3d;
+
+            .stat-title {
+                background: #431a3d;
+                color: #fff1f2;
+                border-radius: 4px;
+                padding: 3px 8px;
+                border-bottom: 2px solid #fb923c;
+            }
         }
 
         .stat-button {
@@ -485,6 +645,10 @@
             border: 0;
             background: transparent;
             grid-area: value;
+        }
+
+        .stat-value.error-red {
+            color: #991b1b;
         }
     }
 
@@ -660,14 +824,17 @@
             gap: 8px;
             padding: 6px 8px;
             margin-bottom: 10px;
-            background: var(--dw-color-dark-10);
-            border: 1px solid var(--dw-color-dark);
+            background: #fff1f5;
+            border: 1px solid #f9a8d4;
+            border-left: 4px solid #be185d;
+            border-radius: 4px;
             flex: 0 0 auto;
 
             .dw-wild-spell-title {
                 flex: 0 0 auto;
                 font-family: var(--dw-font-title);
                 font-size: 1rem;
+                color: #831843;
                 white-space: nowrap;
             }
 
@@ -731,13 +898,25 @@
         .cast-spell-btn {
             flex: 0 0 auto;
             font-size: 0.7rem;
+            font-weight: 600;
             line-height: 1.1;
             padding: 2px 6px;
+            border-radius: 3px;
             white-space: nowrap;
         }
 
-        .costuming-btn.costuming-wizard {
-            background: var(--dw-color-bright);
+        .costuming-btn.costuming-wizard,
+        .dw-spell-list .cast-spell-btn {
+            background: #dbeafe;
+            border-color: #1d4ed8;
+            color: #1e3a8a;
+        }
+
+        .costuming-btn.costuming-wild,
+        .dw-wild-spell-bar .cast-spell-btn {
+            background: #fce7f3;
+            border-color: #be185d;
+            color: #831843;
         }
 
         .add-item,
@@ -786,10 +965,7 @@
                 background-size: cover;
                 background-position: 50% 0;
                 border: none;
-            }
-
-            .item-image {
-                background-color: var(--dw-color-dark-10);
+                border-radius: 4px;
             }
         }
 

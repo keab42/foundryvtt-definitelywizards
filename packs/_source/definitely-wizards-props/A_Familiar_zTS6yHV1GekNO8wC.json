@@ -1,0 +1,31 @@
+{
+  "name": "A Familiar",
+  "type": "Prop",
+  "img": "systems/definitely-wizards/resources/icons/wizard-hat.svg",
+  "system": {
+    "description": "<p><span class=\"fontstyle0\">A mundane but cute critter<em> </em></span><em>(that can't be harmed, don't worry about it)</em> </p>",
+    "quantity": 1,
+    "weight": 0
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "systemId": "definitely-wizards",
+    "systemVersion": "1.1",
+    "coreVersion": "14.370",
+    "createdTime": 1677094135463,
+    "modifiedTime": 1677102484708,
+    "lastModifiedBy": "7tb3mKRi81OTM7ij",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_id": "zTS6yHV1GekNO8wC",
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "7tb3mKRi81OTM7ij": 3
+  },
+  "_key": "!items!zTS6yHV1GekNO8wC"
+}

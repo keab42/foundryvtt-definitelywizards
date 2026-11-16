@@ -1,6 +1,7 @@
 const DEFAULT_ARTWORK_BY_TYPE = {
     Prop: "systems/definitely-wizards/resources/icons/wizard-hat.svg",
     Spell: "systems/definitely-wizards/resources/icons/magic-wand.svg",
+    MiscItem: "systems/definitely-wizards/resources/icons/misc-item.svg",
 };
 
 /**

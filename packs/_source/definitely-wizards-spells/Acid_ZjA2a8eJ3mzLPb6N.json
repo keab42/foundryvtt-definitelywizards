@@ -1,0 +1,33 @@
+{
+  "name": "Acid",
+  "type": "Spell",
+  "img": "systems/definitely-wizards/resources/icons/magic-wand.svg",
+  "system": {
+    "description": "<p><span class=\"fontstyle0\">You produce a small stream of weak acid. Put it over some baking soda for a winning science fair project.</span></p>",
+    "quantity": 1,
+    "weight": 0
+  },
+  "effects": [],
+  "flags": {
+    "core": {}
+  },
+  "_stats": {
+    "systemId": "definitely-wizards",
+    "systemVersion": "1.3.0",
+    "coreVersion": "14.370",
+    "createdTime": 1677094669748,
+    "modifiedTime": 1695756096671,
+    "lastModifiedBy": "LrQo9hT2KbTwz0xO",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "_id": "ZjA2a8eJ3mzLPb6N",
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "LrQo9hT2KbTwz0xO": 3
+  },
+  "_key": "!items!ZjA2a8eJ3mzLPb6N"
+}

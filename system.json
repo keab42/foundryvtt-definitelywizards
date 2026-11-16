@@ -24,6 +24,24 @@
   ],
   "esmodules": ["module/main.js"],
   "styles": ["styles/main.css"],
+  "primaryTokenAttribute": "stats.wizard",
+  "secondaryTokenAttribute": "stats.wild",
+  "background": "systems/definitely-wizards/resources/images/system-banner.jpg",
+  "media": [
+    {
+      "type": "setup",
+      "url": "systems/definitely-wizards/resources/images/system-banner.jpg",
+      "caption": "Definitely Wizards",
+      "loop": false,
+      "flags": {}
+    }
+  ],
+  "flags": {
+    "hotReload": {
+      "extensions": ["css", "html", "hbs", "json"],
+      "paths": ["styles", "templates", "lang"]
+    }
+  },
   "documentTypes": {
     "Actor": {
       "character": {
@@ -76,6 +94,18 @@
       "flags": {},
       "ownership": {
         "PLAYER": "NONE",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "player-macros",
+      "label": "Player Macros",
+      "path": "packs/definitely-wizards-player-macros",
+      "type": "Macro",
+      "system": "definitely-wizards",
+      "flags": {},
+      "ownership": {
+        "PLAYER": "OBSERVER",
         "ASSISTANT": "OWNER"
       }
     }

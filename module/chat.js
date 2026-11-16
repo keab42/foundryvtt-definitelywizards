@@ -225,63 +225,6 @@ async function onRollConsequences(event, message) {
 }
 
 /**
- * Collect eligible covering characters across active scene tokens and owned world characters.
- * @param {string} failedActorUuid
- * @returns {{
- *   candidates: DefinitelyWizardsActorLike[],
- *   hasArrestedCandidate: boolean,
- *   hasOwnCaster: boolean,
- * }}
- */
-function collectCoveringCandidates(failedActorUuid) {
-    const sceneTokens = canvas?.tokens?.placeables?.length
-        ? canvas.tokens.placeables
-        : (game.scenes?.active?.tokens ?? game.scenes?.current?.tokens ?? []);
-
-    /** @type {Map<string, DefinitelyWizardsActorLike>} */
-    const candidatesByUuid = new Map();
-    /** @type {Set<string>} */
-    const unlinkedBaseIds = new Set();
-    let hasArrestedCandidate = false;
-    let hasOwnCaster = false;
-
-    /** @param {DefinitelyWizardsActorLike | null | undefined} actor */
-    const considerActor = (actor) => {
-        if (actor?.type !== "character" || !actor.isOwner) return;
-        if (actor.uuid === failedActorUuid) {
-            hasOwnCaster = true;
-            return;
-        }
-        if (Number(actor.system?.stats?.wild) >= 7) {
-            hasArrestedCandidate = true;
-            return;
-        }
-        if (!candidatesByUuid.has(actor.uuid)) {
-            candidatesByUuid.set(actor.uuid, actor);
-        }
-    };
-
-    for (const token of sceneTokens) {
-        const actor = token?.actor;
-        if (actor?.type === "character" && actor.isOwner && actor.isToken) {
-            unlinkedBaseIds.add(actor.id);
-        }
-        considerActor(actor);
-    }
-
-    for (const actor of game.actors.filter((a) => a.type === "character" && a.isOwner)) {
-        if (unlinkedBaseIds.has(actor.id)) continue;
-        considerActor(actor);
-    }
-
-    return {
-        candidates: Array.from(candidatesByUuid.values()),
-        hasArrestedCandidate,
-        hasOwnCaster,
-    };
-}
-
-/**
  * Resolve which party character is causing a distraction to Cover a failed roll.
  * @param {string} failedActorUuid
  * @returns {Promise<DefinitelyWizardsActorLike | null>}
@@ -317,8 +260,14 @@ async function resolveCoveringActor(failedActorUuid) {
         return assigned;
     }
 
-    const { candidates, hasArrestedCandidate, hasOwnCaster } =
-        collectCoveringCandidates(failedActorUuid);
+    const {
+        candidates,
+        hasArrestedCandidate,
+        hasExcluded: hasOwnCaster,
+    } = Dice.collectOwnedCharacters({
+        excludeUuid: failedActorUuid,
+        skipArrested: true,
+    });
 
     if (candidates.length === 0) {
         if ((assigned && Number(assigned.system?.stats?.wild) >= 7) || hasArrestedCandidate) {
@@ -336,32 +285,15 @@ async function resolveCoveringActor(failedActorUuid) {
             (actor) => actor.uuid !== failedActorUuid && Number(actor.system?.stats?.wild) < 7,
         )?.uuid ?? candidates[0].uuid;
 
-    const optionsHtml = candidates
-        .map((actor) => {
-            const isSelected = actor.uuid === defaultSelectedUuid ? " selected" : "";
-            return `<option value="${foundry.utils.escapeHTML(actor.uuid)}"${isSelected}>${foundry.utils.escapeHTML(actor.name)} (${game.i18n.localize("DW.Wild")}: ${actor.system.stats.wild})</option>`;
-        })
-        .join("");
-
-    const result = await foundry.applications.api.DialogV2.input({
-        window: { title: game.i18n.localize("DW.ChooseCoveringActorTitle") },
-        content: `<div class="form-group"><label>${game.i18n.localize("DW.ChooseCoveringActorPrompt")}</label><select name="actorUuid">${optionsHtml}</select></div>`,
-        ok: { label: game.i18n.localize("DW.CoverButton") },
-        buttons: [
-            {
-                action: "cancel",
-                label: game.i18n.localize("DW.CancelButton"),
-                icon: "fa-solid fa-xmark",
-                type: "button",
-                callback: () => null,
-            },
-        ],
-        rejectClose: false,
-        modal: true,
+    return Dice.promptActorChoice({
+        candidates,
+        defaultUuid: defaultSelectedUuid,
+        title: game.i18n.localize("DW.ChooseCoveringActorTitle"),
+        prompt: game.i18n.localize("DW.ChooseCoveringActorPrompt"),
+        confirmLabel: game.i18n.localize("DW.CoverButton"),
+        formatOption: (actor) =>
+            `${actor.name} (${game.i18n.localize("DW.Wild")}: ${actor.system.stats.wild})`,
     });
-
-    if (!result?.actorUuid) return null;
-    return Dice.resolveActor(String(result.actorUuid));
 }
 
 /**
@@ -451,12 +383,10 @@ async function onWildDisguiseFail(event, message) {
             return;
         }
 
-        await actor.updateStat(false, 1);
-
         const created = await ChatMessage.create({
             user: game.user.id,
             speaker: ChatMessage.getSpeaker({ actor }),
-            content: `<div class="definitelywizards chat-card"><p>${foundry.utils.escapeHTML(actor.name)}: +1 ${game.i18n.localize("DW.Wild")}</p></div>`,
+            content: `<div class="definitelywizards chat-card dw-wild-card"><p>${foundry.utils.escapeHTML(actor.name)}: +1 ${game.i18n.localize("DW.Wild")}</p></div>`,
             style: CONST.CHAT_MESSAGE_STYLES.OOC,
             flags: message?.id
                 ? {
@@ -468,6 +398,9 @@ async function onWildDisguiseFail(event, message) {
                   }
                 : {},
         });
+        if (created) {
+            await actor.updateStat(false, 1);
+        }
         resolved = Boolean(created);
     } finally {
         if (!resolved) {

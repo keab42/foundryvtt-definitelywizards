@@ -8,14 +8,24 @@
             </h1>
             {{!-- Stats Block --}}
             <div class="dw-stat-block dw-stat-wizard">
-                <h2 class="stat-title">{{localize 'DW.Wizard'}}</h2>
+                <h2 class="stat-title">
+                    <span class="dw-stat-title-label">
+                        <svg class="dw-stat-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                            <path d="M12 1C13 11 13 11 22 12C13 13 13 13 12 23C11 13 11 13 2 12C11 11 11 11 12 1Z" fill="#fbbf24" />
+                        </svg>
+                        <span>{{localize 'DW.Wizard'}}</span>
+                    </span>
+                    {{#if isWizardHigh}}
+                    <span class="dw-stat-badge">{{localize 'DW.StatLockedBadge'}}</span>
+                    {{/if}}
+                </h2>
                 <input class="stat-value {{#if isWizardHigh}}error-red{{/if}}" name="system.stats.wizard" type="number" value="{{system.stats.wizard}}"
                     readonly="readonly" />
                 {{#if editable}}
-                <img class="stat-roll-single expand no-border {{#if isWizardHigh}}stat-locked{{/if}}" title="{{wizardRollTooltip}}" data-action="statRoll" data-roll="1d6"
-                    src="systems/definitely-wizards/resources/icons/die-six.svg" />
-                <img class="stat-roll-double expand no-border {{#if isWizardHigh}}stat-locked{{/if}}" title="{{wizardWitRollTooltip}}"
-                    data-action="statRoll" data-roll="2d6kl" src="systems/definitely-wizards/resources/icons/die-six-double.svg" />
+                <img class="stat-roll-single expand no-border draggable {{#if isWizardHigh}}stat-locked{{/if}}" title="{{wizardRollTooltip}}" data-action="statRoll" data-stat="wizard" data-roll="1d6" draggable="true"
+                    src="systems/definitely-wizards/resources/icons/sheet-wizard-1d6.svg" />
+                <img class="stat-roll-double expand no-border draggable {{#if isWizardHigh}}stat-locked{{/if}}" title="{{wizardWitRollTooltip}}"
+                    data-action="statRoll" data-stat="wizard" data-roll="2d6kl" draggable="true" src="systems/definitely-wizards/resources/icons/sheet-wizard-wit.svg" />
                 <img class="stat-button-plus no-border expand" data-action="statPlus" title="{{localize 'DW.AddToWizardTooltip'}}"
                     src="systems/definitely-wizards/resources/icons/plus.svg" />
                 <img class="stat-button-minus no-border expand" data-action="statMinus" title="{{localize 'DW.RemoveFromWizardTooltip'}}"
@@ -25,15 +35,27 @@
                 {{/if}}
             </div>
             <div class="dw-stat-block dw-stat-wild">
-                <h2 class="stat-title">{{localize 'DW.Wild'}}</h2>
+                <h2 class="stat-title">
+                    <span class="dw-stat-title-label">
+                        <svg class="dw-stat-icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+                            <path d="M15 1L5.5 13h6L8.5 23 19.5 10.5h-6z" fill="#fb923c" />
+                        </svg>
+                        <span>{{localize 'DW.Wild'}}</span>
+                    </span>
+                    {{#if isWildArrested}}
+                    <span class="dw-stat-badge dw-stat-badge-arrested">{{localize 'DW.WildArrestedBadge'}}</span>
+                    {{else if isWildHigh}}
+                    <span class="dw-stat-badge">{{localize 'DW.StatLockedBadge'}}</span>
+                    {{/if}}
+                </h2>
                 <input class="stat-value {{#if isWildHigh}}error-red{{/if}}" name="system.stats.wild" type="number" value="{{system.stats.wild}}"
                     readonly="readonly" />
                 {{#if editable}}
-                <img class="stat-roll-single expand no-border {{#if isWildHigh}}stat-locked{{/if}}" data-action="statRoll" data-roll="1d6" title="{{wildRollTooltip}}"
-                    src="systems/definitely-wizards/resources/icons/die-six.svg" />
-                <img class="stat-roll-double expand no-border {{#if isWildHigh}}stat-locked{{/if}}" data-action="statRoll" data-roll="2d6kl"
+                <img class="stat-roll-single expand no-border draggable {{#if isWildHigh}}stat-locked{{/if}}" data-action="statRoll" data-stat="wild" data-roll="1d6" draggable="true" title="{{wildRollTooltip}}"
+                    src="systems/definitely-wizards/resources/icons/sheet-wild-1d6.svg" />
+                <img class="stat-roll-double expand no-border draggable {{#if isWildHigh}}stat-locked{{/if}}" data-action="statRoll" data-stat="wild" data-roll="2d6kl" draggable="true"
                     title="{{wildWitRollTooltip}}"
-                    src="systems/definitely-wizards/resources/icons/die-six-double.svg" />
+                    src="systems/definitely-wizards/resources/icons/sheet-wild-wit.svg" />
                 <img class="stat-button-plus no-border expand" data-action="statPlus" title="{{localize 'DW.AddToWildTooltip'}}"
                     src="systems/definitely-wizards/resources/icons/plus.svg" />
                 <img class="stat-button-minus no-border expand" data-action="statMinus" title="{{localize 'DW.RemoveFromWildTooltip'}}"
@@ -171,7 +193,7 @@
                                 <h4>{{name}}</h4>
                             </div>
                             <div class="prop-detail prop-description">
-                                {{{system.description}}}
+                                {{{enrichedDescription}}}
                             </div>
                             <div class="prop-controls flexrow">
                                 {{#if ../editable}}
@@ -207,7 +229,7 @@
                                 <h4>{{name}}</h4>
                             </div>
                             <div class="item-detail item-description">
-                                {{{system.description}}}
+                                {{{enrichedDescription}}}
                             </div>
                             <div class="item-controls flexrow">
                                 {{#if ../editable}}
@@ -265,7 +287,7 @@
                                 <h4>{{name}}</h4>
                             </div>
                             <div class="spell-detail spell-description">
-                                {{{system.description}}}
+                                {{{enrichedDescription}}}
                             </div>
                             <div class="spell-controls flexrow">
                                 {{#if ../editable}}

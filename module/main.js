@@ -9,9 +9,27 @@ import {
 import { generatePracticalExam } from "./exam-generator.js";
 import { DefinitelyWizardsItem } from "./item.js";
 import { DefinitelyWizardsItemSheet } from "./item-sheet.js";
+import {
+    initMacroListeners,
+    onHotbarDrop,
+    rollItemMacro,
+    rollStatMacro,
+    seedDefaultPlayerHotbars,
+} from "./macros.js";
 
 Hooks.once("init", async () => {
     console.log("DefinitelyWizards: Initializing");
+
+    initMacroListeners();
+
+    game.settings.register("definitely-wizards", "autoPopulateHotbar", {
+        name: "DW.SettingAutoPopulateHotbarName",
+        hint: "DW.SettingAutoPopulateHotbarHint",
+        scope: "world",
+        config: true,
+        type: Boolean,
+        default: true,
+    });
 
     CONFIG.DEFINITELY_WIZARDS = DEFINITELY_WIZARDS;
     CONFIG.Actor.documentClass = DefinitelyWizardsActor;
@@ -23,6 +41,8 @@ Hooks.once("init", async () => {
 
     game.definitelyWizards = {
         generatePracticalExam,
+        rollStatMacro,
+        rollItemMacro,
     };
 
     const { DocumentSheetConfig } = foundry.applications.apps;
@@ -70,8 +90,16 @@ Hooks.once("ready", async () => {
     if (rollTablesToAdd.length > 0) {
         await RollTable.createDocuments(rollTablesToAdd);
     }
+
+    await seedDefaultPlayerHotbars();
 });
 
 Hooks.on("renderChatMessageHTML", (message, html) => Chat.addChatListeners(message, html));
 Hooks.on("createChatMessage", (message) => Chat.onCreateChatMessage(message));
 Hooks.on("deleteChatMessage", (message) => Chat.onDeleteChatMessage(message));
+Hooks.on("hotbarDrop", onHotbarDrop);
+Hooks.on("createUser", (user) => {
+    if (game.users.activeGM?.isSelf) {
+        void seedDefaultPlayerHotbars({ targetUser: user });
+    }
+});

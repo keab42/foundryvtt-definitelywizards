@@ -1,0 +1,31 @@
+{
+  "name": "A Costume-quality Amulet",
+  "type": "Prop",
+  "img": "systems/definitely-wizards/resources/icons/wizard-hat.svg",
+  "system": {
+    "description": "<p><span class=\"fontstyle0\">It looks real valuable from a distance.</span> </p>",
+    "quantity": 1,
+    "weight": 0
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "systemId": "definitely-wizards",
+    "systemVersion": "1.1",
+    "coreVersion": "14.370",
+    "createdTime": 1677094244254,
+    "modifiedTime": 1677102484707,
+    "lastModifiedBy": "7tb3mKRi81OTM7ij",
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_id": "HLE5kpf2d70sKRrJ",
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0,
+    "7tb3mKRi81OTM7ij": 3
+  },
+  "_key": "!items!HLE5kpf2d70sKRrJ"
+}
